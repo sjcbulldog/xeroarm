@@ -1,15 +1,14 @@
 #include "xeroarm.h"
 #include <QtCore/QCoreApplication>
 #include <QtWidgets/QMenuBar>
+#include <QtWidgets/QDockWidget>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
 #include <QtGui/QCloseEvent>
 
 xeroarm::xeroarm(QWidget *parent) : QMainWindow(parent)
 {
-	central_ = new CentralWidget(model_, this);
-	setCentralWidget(central_);
-
+	createWindows();
 	createMenus();
 
 	if (settings_.contains(GeometrySetting))
@@ -54,6 +53,31 @@ xeroarm::xeroarm(QWidget *parent) : QMainWindow(parent)
 
 xeroarm::~xeroarm()
 {
+}
+
+void xeroarm::createWindows()
+{
+	central_ = new CentralWidget(model_, this);
+	setCentralWidget(central_);
+
+	path_display_dock_ = new QDockWidget(tr("Paths"));
+	path_display_ = new PathsDisplayWidget(model_);
+	path_display_dock_->setObjectName("paths");
+	path_display_dock_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+	path_display_dock_->setWidget(path_display_);
+	addDockWidget(Qt::RightDockWidgetArea, path_display_dock_);
+
+	waypoint_display_dock_ = new QDockWidget(tr("Waypoint"));
+	waypoint_display_ = new WaypointWindow(model_, nullptr);
+	waypoint_display_dock_->setObjectName("paths");
+	waypoint_display_dock_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+	waypoint_display_dock_->setWidget(waypoint_display_);
+	addDockWidget(Qt::RightDockWidgetArea, waypoint_display_dock_);
+
+	(void)connect(path_display_, &PathsDisplayWidget::pathSelected, central_, &CentralWidget::pathSelected);
+	(void)connect(path_display_, &PathsDisplayWidget::pathSelected, waypoint_display_, &WaypointWindow::setPath);
+
+	(void)connect(central_->display(), &ArmDisplay::pathPointSelected, waypoint_display_, &WaypointWindow::setWaypoint);
 }
 
 void xeroarm::closeEvent(QCloseEvent* ev)

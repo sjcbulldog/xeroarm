@@ -91,11 +91,11 @@ void ArmSettings::jointSettingChanged(int which, ChangeType type)
 		dm.setLength(settings_[which]->length());
 		break;
 
-	case ChangeType::Current:
+	case ChangeType::CurrentAngle:
 		dm.setAngle(settings_[which]->currentPos());
 		break;
 
-	case ChangeType::initialAngleition:
+	case ChangeType::InitialAngle:
 		dm.setinitialAngle(settings_[which]->initialAngle());
 	}
 

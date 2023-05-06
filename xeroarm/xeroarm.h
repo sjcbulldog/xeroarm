@@ -1,9 +1,12 @@
 #pragma once
 
-#include <QtWidgets/QMainWindow>
-#include <QtWidgets/QMenu>
 #include "CentralWidget.h"
 #include "ArmDataModel.h"
+#include "PathsDisplayWidget.h"
+#include "WaypointWindow.h"
+#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QMenu>
+
 
 class xeroarm : public QMainWindow
 {
@@ -17,6 +20,7 @@ protected:
     void closeEvent(QCloseEvent* ev) override;
 
 private:
+    void createWindows();
     void createMenus();
 
     void saveFile();
@@ -41,6 +45,13 @@ private:
     QSettings settings_;
     ArmDataModel model_;
     CentralWidget* central_;
+
+    QDockWidget* path_display_dock_;
+    PathsDisplayWidget* path_display_;
+
+    QDockWidget* waypoint_display_dock_;
+    WaypointWindow* waypoint_display_;
+
     QString filename_;
 
     QMenu* file_menu_;

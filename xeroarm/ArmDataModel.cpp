@@ -37,10 +37,10 @@ QPointF ArmDataModel::getInitialArmPos()
 	return start;
 }
 
-void ArmDataModel::somethingChanged()
+void ArmDataModel::somethingChanged(ChangeType type)
 {
 	dirty_ = true;
-	emit dataChanged();
+	emit dataChanged(type);
 }
 
 bool ArmDataModel::parsePose(const QJsonObject& pos, const QString& name, QString& error, Pose2d& posv)

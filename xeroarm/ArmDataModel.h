@@ -4,6 +4,7 @@
 #include "ArmPath.h"
 #include "MathUtils.h"
 #include "Pose2d.h"
+#include "ChangeType.h"
 #include <QtCore/QPointF>
 #include <QtCore/QSizeF>
 #include <QtCore/QString>
@@ -46,7 +47,7 @@ public:
 	void setArmPos(const QPointF& pos) {
 		if (MathUtils::epsilonEqual(pos.x(), arm_pos_.x()) == false || MathUtils::epsilonEqual(pos.y(), arm_pos_.y()) == false) {
 			arm_pos_ = pos;
-			somethingChanged();
+			somethingChanged(ChangeType::ArmPos);
 		}
 	}
 
@@ -57,7 +58,7 @@ public:
 	void setBumperPos(const QPointF& pos) {
 		if (MathUtils::epsilonEqual(pos.x(), bumper_pos_.x()) == false || MathUtils::epsilonEqual(pos.y(), bumper_pos_.y()) == false) {
 			bumper_pos_ = pos;
-			somethingChanged();
+			somethingChanged(ChangeType::BumperPos);
 		}
 	}
 
@@ -68,7 +69,7 @@ public:
 	void setBumperSize(const QSizeF& sz) {
 		if (MathUtils::epsilonEqual(sz.width(), bumper_size_.width()) == false || MathUtils::epsilonEqual(sz.height(), bumper_size_.height()) == false) {
 			bumper_size_ = sz;
-			somethingChanged();
+			somethingChanged(ChangeType::BumperSize);
 		}
 	}
 
@@ -82,17 +83,17 @@ public:
 
 	void clearTargets() {
 		targets_.clear();
-		somethingChanged();
+		somethingChanged(ChangeType::Targets);
 	}
 
 	void addTarget(const QPointF& t) {
 		targets_.push_back(t);
-		somethingChanged();
+		somethingChanged(ChangeType::Targets);
 	}
 	
 	void removeTarget(int index) {
 		targets_.removeAt(index);
-		somethingChanged();
+		somethingChanged(ChangeType::Targets);
 	}
 
 	int jointCount() const {
@@ -105,12 +106,12 @@ public:
 
 	void addJointModel(const JointDataModel& model) {
 		joints_.push_back(model);
-		somethingChanged();
+		somethingChanged(ChangeType::AddJoint);
 	}
 
 	void replaceJointModel(int which, const JointDataModel& model) {
 		joints_[which] = model;
-		somethingChanged();
+		somethingChanged(ChangeType::UpdateJoint);
 	}
 
 	bool hasPath(const QString& name) const {
@@ -126,22 +127,16 @@ public:
 
 	void addPath(std::shared_ptr<ArmPath> path) {
 		paths_.insert(path->name(), path);
-		somethingChanged();
+		somethingChanged(ChangeType::AddPath);
 	}
 
 	void removePath(const QString& name) {
 		paths_.remove(name);
-		somethingChanged();
+		somethingChanged(ChangeType::RemovePath);
 	}
 
 	void removePath(std::shared_ptr<ArmPath> path) {
 		paths_.remove(path->name());
-		somethingChanged();
-	}
-
-	void updatePath(std::shared_ptr<ArmPath> path) {
-		paths_.insert(path->name(), path);
-		somethingChanged();
 	}
 
 	void renamePath(const QString& oldname, const QString& newname) {
@@ -151,10 +146,17 @@ public:
 		removePath(oldname);
 		path->setName(newname);
 		addPath(path);
+
+		somethingChanged(ChangeType::RenamePath);
 	}
 
 	QList<std::shared_ptr<ArmPath>> getPaths() {
 		return paths_.values();
+	}
+
+	void pathPointChanged() {
+		dirty_ = true;
+		emit dataChanged(ChangeType::PathPoint);
 	}
 
 	static bool parseNamedPosition(const QJsonObject& obj, const QString& name, QString& err, QPointF& pos);
@@ -165,10 +167,10 @@ public:
 	static bool parseSize(const QJsonObject& obj, const QString& name, QString& err, QSizeF& sz);
 
 signals:
-	void dataChanged();
+	void dataChanged(ChangeType type);
 
 private:
-	void somethingChanged();
+	void somethingChanged(ChangeType type);
 
 	QJsonArray targetsToJson();
 	QJsonArray jointsToJson();

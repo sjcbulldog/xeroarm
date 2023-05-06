@@ -2,12 +2,18 @@
 
 enum class ChangeType
 {
+	AddJoint,
+	UpdateJoint,
+	InitialAngle,
+	CurrentAngle,
 	ArmLength,
-	Current,
-	initialAngleition,
 	BumperPos,
 	BumperSize,
 	ArmPos,
 	ArmKeepout,
-	Target
+	Targets,
+	AddPath,
+	RemovePath,
+	RenamePath,
+	PathPoint
 };

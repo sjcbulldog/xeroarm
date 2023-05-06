@@ -24,11 +24,6 @@ CentralWidget::CentralWidget(ArmDataModel &model, QWidget *parent) : model_(mode
 	display_->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 	bottom_->addWidget(display_);
 
-	paths_ = new PathsDisplayWidget(model);
-	paths_->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
-	bottom_->addWidget(paths_);
-	(void)connect(paths_, &PathsDisplayWidget::pathSelected, this, &CentralWidget::pathSelected);
-
 	setLayout(layout);
 
 	(void)connect(&model_, &ArmDataModel::dataChanged, this, &CentralWidget::dataModelChanged);

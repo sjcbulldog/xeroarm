@@ -28,6 +28,8 @@ ArmDisplay::ArmDisplay(ArmDataModel &model, QWidget* parent) : QWidget(parent), 
 		{ -TriangleSize / 2.0, TriangleSize / 2.0},
 		{ -TriangleSize / 2.0, -TriangleSize / 2.0 }
 	};
+
+	(void)connect(&model_, &ArmDataModel::dataChanged, this, &ArmDisplay::redraw);
 }
 
 ArmDisplay::~ArmDisplay()
@@ -40,20 +42,102 @@ void ArmDisplay::keyPressEvent(QKeyEvent* ev)
 	{
 		model_.setToInitialArmPos();
 	}
+	else if (ev->key() == Qt::Key::Key_Insert)
+	{
+		if (path_ != nullptr && selected_ != -1) {
+			const Pose2d& p1 = path_->at(selected_);
+			const Pose2d& p2 = path_->at(selected_ + 1);
+
+			Rotation2d r = Rotation2d::fromRadians((p1.getRotation().toRadians() + p2.getRotation().toRadians()) / 2.0);
+			Translation2d t((p1.getTranslation().getX() + p2.getTranslation().getX()) / 2.0, (p1.getTranslation().getY() + p2.getTranslation().getY()) / 2.0);
+			Pose2d newpt(t, r);
+
+			path_->insertPoint(selected_, newpt);
+
+			// Move selected waypoint to the one we just created
+			selected_++;
+			emit pathPointSelected(path_, selected_);
+			repaint(geometry());
+		}
+	}
+}
+
+bool ArmDisplay::hitTest(const QPointF &pt, int &index, bool& center)
+{
+	for (int i = 0; i < path_->count(); i++) {
+		Pose2d p = path_->at(i);
+		if (MathUtils::epsilonEqual(p.getTranslation().getX(), pt.x(), 1.5) && MathUtils::epsilonEqual(p.getTranslation().getY(), pt.y(), 1.5)) {
+			index = i;
+			center = true;
+			return true;
+		}
+	}
+
+	for (int i = 0; i < path_->count(); i++) {
+		Pose2d p = path_->at(i);
+		if (MathUtils::epsilonEqual(p.getTranslation().getX(), pt.x(), 3.0) && MathUtils::epsilonEqual(p.getTranslation().getY(), pt.y(), 3.0)) {
+			index = i;
+			center = false;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void ArmDisplay::mousePressEvent(QMouseEvent* ev)
 {
-	if (ev->button() == Qt::RightButton) {
-		emit endPath();
+	selected_ = -1;
+
+	if (ev->buttons() == Qt::LeftButton && path_ != nullptr && xform_.isInvertible()) {
+		QTransform inv = xform_.inverted();
+		QPointF pt = inv.map(ev->pos());
+
+		int index;
+		bool center;
+
+		if (hitTest(pt, index, center)) {
+			selected_ = index;
+			emit pathPointSelected(path_, index);
+			rotating_ = !center;
+			dragging_ = center;
+		}
+		else {
+			rotating_ = false;
+			dragging_ = false;
+		}
 	}
-	else {
-		QTransform xform;
-		xform.translate(origin_.x(), origin_.y());
-		xform.scale(scale_, -scale_);
-		QTransform revform = xform.inverted();
-		QPointF pt = revform.map(ev->position());
-		emit pointSelected(pt);
+
+	repaint();
+}
+
+void ArmDisplay::mouseReleaseEvent(QMouseEvent* ev)
+{
+	rotating_ = false;
+	dragging_ = false;
+}
+
+void ArmDisplay::mouseMoveEvent(QMouseEvent* ev)
+{
+	if (path_ != nullptr) {
+		QTransform inv = xform_.inverted();
+		QPointF mpt = inv.map(ev->pos());
+
+		if (dragging_)
+		{
+			qDebug() << "dragging";
+		}
+		else if (rotating_)
+		{
+			const Pose2d& pt = path_->at(selected_);
+			double angle = std::atan2(mpt.y() - pt.getTranslation().getY(), mpt.x() - pt.getTranslation().getX()) - MathUtils::kPI / 2;
+			Rotation2d r = Rotation2d::fromRadians(angle);
+			Pose2d npt(pt.getTranslation(), r);
+			path_->replacePoint(selected_, npt);
+			model_.pathPointChanged();
+
+			qDebug() << "Rotating" << r.toDegrees();
+		}
 	}
 }
 
@@ -132,6 +216,10 @@ void ArmDisplay::calcTransforms()
 	int x = width() * -bounds.x() / bounds.width();
 	int y = height() - margins_.bottom();
 	origin_ = QPoint(x, y);
+
+	xform_ = QTransform();
+	xform_.translate(origin_.x(), origin_.y());
+	xform_.scale(scale_, -scale_);
 }
 
 void ArmDisplay::paintEvent(QPaintEvent* ev)
@@ -144,10 +232,7 @@ void ArmDisplay::paintEvent(QPaintEvent* ev)
 
 	p.save();
 
-	QTransform xform;
-	xform.translate(origin_.x(), origin_.y());
-	xform.scale(scale_, -scale_);
-	p.setTransform(xform);
+	p.setTransform(xform_);
 
 	drawOrigin(p);
 	drawBumpers(p);
@@ -243,7 +328,7 @@ void ArmDisplay::drawSpline(QPainter& paint, std::shared_ptr<SplinePair> pair)
 void ArmDisplay::drawPoints(QPainter& p)
 {
 	for (int i = 0; i < path_->count(); i++) {
-		drawOnePoint(p, path_->at(i), false);
+		drawOnePoint(p, path_->at(i), i == selected_);
 	}
 }
 

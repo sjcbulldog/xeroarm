@@ -2,6 +2,8 @@
 
 #include <QtWidgets/QTreeWidget>
 
+#include "ChangeType.h"
+
 class ArmDataModel;
 class ArmPath;
 
@@ -26,7 +28,7 @@ private:
 	void itemRenamed(QTreeWidgetItem* item, int column);
 	bool isValidName(const QString& name);
 
-	void modelChanged();
+	void modelChanged(ChangeType type);
 
 	QTreeWidgetItem *addPathToDisplay(std::shared_ptr<ArmPath> path);
 
@@ -34,5 +36,6 @@ private:
 	ArmDataModel& model_;
 	QTreeWidgetItem* current_;
 	std::shared_ptr<ArmPath> current_path_;
+	bool ignore_;
 };
 

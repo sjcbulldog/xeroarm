@@ -22,19 +22,22 @@ public:
 		display_->resetDisplay();
 	}
 
+	ArmDisplay* display() {
+		return display_;
+	}
+
 	QSplitter* getMainSplitter() { return main_;  }
 	QSplitter* getBottomSplitter() { return bottom_; }
 
+	void pathSelected(std::shared_ptr<ArmPath> path);
+
 private:
 	void dataModelChanged();
-
-	void pathSelected(std::shared_ptr<ArmPath> path);
 
 private:
 	ArmDataModel& model_;
 	ArmSettings* settings_;
 	ArmDisplay* display_;
-	PathsDisplayWidget* paths_;
 	QSplitter* main_;
 	QSplitter* bottom_;
 };

@@ -102,6 +102,7 @@
     <ClCompile Include="TargetPanel.cpp" />
     <ClCompile Include="Translation2d.cpp" />
     <ClCompile Include="Twist2d.cpp" />
+    <ClCompile Include="WaypointWindow.cpp" />
     <ClCompile Include="xeroarm.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -120,12 +121,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MathUtils.h" />
+    <ClInclude Include="NoEditDelegate.h" />
     <ClInclude Include="Pose2d.h" />
     <ClInclude Include="QuinticHermiteSpline.h" />
     <ClInclude Include="Rotation2d.h" />
     <ClInclude Include="SplinePair.h" />
     <ClInclude Include="Translation2d.h" />
     <ClInclude Include="Twist2d.h" />
+    <QtMoc Include="WaypointWindow.h" />
     <QtMoc Include="TargetPanel.h" />
     <QtMoc Include="ArmDataModel.h" />
     <ClInclude Include="ArmPath.h" />

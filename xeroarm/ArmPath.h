@@ -28,6 +28,10 @@ public:
 		points_.push_back(pt);
 	}
 
+	void insertPoint(int index, const Pose2d& pt) {
+		points_.insert(index + 1, pt);
+	}
+
 	int size() const {
 		return points_.size();
 	}
@@ -42,6 +46,10 @@ public:
 
 	const Pose2d& operator[](int index) {
 		return points_[index];
+	}
+
+	void replacePoint(int index, const Pose2d& pt) {
+		points_[index] = pt;
 	}
 
 	QJsonObject toJson();

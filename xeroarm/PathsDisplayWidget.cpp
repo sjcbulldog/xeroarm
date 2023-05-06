@@ -14,6 +14,7 @@ PathsDisplayWidget::PathsDisplayWidget(ArmDataModel& model, QWidget* parent) : Q
 	connect(&model, &ArmDataModel::dataChanged, this, &PathsDisplayWidget::modelChanged);
 
 	current_ = nullptr;
+	ignore_ = false;
 }
 
 QTreeWidgetItem* PathsDisplayWidget::addPathToDisplay(std::shared_ptr<ArmPath> path)
@@ -27,11 +28,13 @@ QTreeWidgetItem* PathsDisplayWidget::addPathToDisplay(std::shared_ptr<ArmPath> p
 	return item;
 }
 
-void PathsDisplayWidget::modelChanged()
+void PathsDisplayWidget::modelChanged(ChangeType type)
 {
-	clear();
-	for (auto path : model_.getPaths()) {
-		addPathToDisplay(path);
+	if ((type == ChangeType::AddPath || type == ChangeType::RemovePath || type == ChangeType::RenamePath) && !ignore_) {
+		clear();
+		for (auto path : model_.getPaths()) {
+			addPathToDisplay(path);
+		}
 	}
 }
 
@@ -87,10 +90,9 @@ void PathsDisplayWidget::deletePath()
 	QString name = current_->text(0);
 	model_.removePath(name);
 
-	delete current_;
 	current_ = nullptr;
 
-	if (current_path_->name() == name) {
+	if (current_path_ != nullptr && current_path_->name() == name) {
 		current_path_ = nullptr;
 		emit pathSelected(nullptr);
 	}

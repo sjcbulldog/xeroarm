@@ -143,12 +143,12 @@ void OneArmSettings::lengthChanged()
 
 void OneArmSettings::initialPosChanged()
 {
-	emit settingsChanged(which_, ChangeType::initialAngleition);
+	emit settingsChanged(which_, ChangeType::InitialAngle);
 }
 
 void OneArmSettings::currentChanged()
 {
-	emit settingsChanged(which_, ChangeType::Current);
+	emit settingsChanged(which_, ChangeType::CurrentAngle);
 }
 
 QVector<QPair<double, double>> OneArmSettings::keepOuts()
