@@ -345,6 +345,9 @@ bool ArmDataModel::load(const QString& path, QString& error)
 	if (!parseTargets(obj, error))
 		return false;
 
+	setToInitialArmPos();
+	dirty_ = false;
+
 	return true;
 }
 

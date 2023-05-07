@@ -26,6 +26,9 @@ ArmSettings::ArmSettings(ArmDataModel &model, QWidget* parent) : QWidget(parent)
 	setLayout(layout_); 
 
 	(void)connect(&model_, &ArmDataModel::dataChanged, this, &ArmSettings::modelDataChanged);
+
+	model_.setToInitialArmPos();
+	model_.clearDirtyFlag();
 }
 
 ArmSettings::~ArmSettings()

@@ -125,7 +125,11 @@ void ArmDisplay::mouseMoveEvent(QMouseEvent* ev)
 
 		if (dragging_)
 		{
-			qDebug() << "dragging";
+			Pose2d old = path_->at(selected_);
+			Translation2d t(mpt.x(), mpt.y());
+			Pose2d npt(t, old.getRotation());
+			path_->replacePoint(selected_, npt);
+			model_.pathPointChanged();
 		}
 		else if (rotating_)
 		{
@@ -135,8 +139,6 @@ void ArmDisplay::mouseMoveEvent(QMouseEvent* ev)
 			Pose2d npt(pt.getTranslation(), r);
 			path_->replacePoint(selected_, npt);
 			model_.pathPointChanged();
-
-			qDebug() << "Rotating" << r.toDegrees();
 		}
 	}
 }

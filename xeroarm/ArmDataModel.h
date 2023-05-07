@@ -29,6 +29,10 @@ public:
 		return dirty_;
 	}
 
+	void clearDirtyFlag() {
+		dirty_ = false;
+	}
+
 	void clear() {
 		arm_pos_ = QPointF(0.0, 2.0);
 		bumper_pos_ = QPointF(10.5, 2.0);
