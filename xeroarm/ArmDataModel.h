@@ -1,6 +1,7 @@
 #pragma once
 
 #include "JointDataModel.h"
+#include "RobotArm.h"
 #include "ArmPath.h"
 #include "MathUtils.h"
 #include "Pose2d.h"
@@ -22,8 +23,13 @@ class ArmDataModel : public QObject
 public:
 	ArmDataModel();
 
-	QPointF getInitialArmPos();
-	void setToInitialArmPos();
+	Translation2d getInitialArmPos() {
+		return arm_.getInitialArmPos();
+	}
+
+	void setToInitialArmPos() {
+		arm_.setToInitialArmPos();
+	}
 
 	bool isDirty() const {
 		return dirty_;
@@ -34,11 +40,11 @@ public:
 	}
 
 	void clear() {
-		arm_pos_ = QPointF(0.0, 2.0);
-		bumper_pos_ = QPointF(10.5, 2.0);
-		bumper_size_ = QSizeF(3.5, 5.0);
+		arm_.setPos(Translation2d(0.0, 2.0));
+		bumper_pos_ = Translation2d(10.5, 2.0);
+		bumper_size_ = Translation2d(3.5, 5.0);
 
-		joints_.clear();
+		arm_.clear();
 		paths_.clear();
 		targets_.clear();
 
@@ -48,40 +54,40 @@ public:
 	bool load(const QString& path, QString& error);
 	bool save(const QString& path, QString& error);
 
-	void setArmPos(const QPointF& pos) {
-		if (MathUtils::epsilonEqual(pos.x(), arm_pos_.x()) == false || MathUtils::epsilonEqual(pos.y(), arm_pos_.y()) == false) {
-			arm_pos_ = pos;
+	void setArmPos(const Translation2d& pos) {
+		if (MathUtils::epsilonEqual(pos.getX(), arm_.pos().getX()) == false || MathUtils::epsilonEqual(pos.getY(), arm_.pos().getY()) == false) {
+			arm_.setPos(pos);
 			somethingChanged(ChangeType::ArmPos);
 		}
 	}
 
-	const QPointF& armPos() const {
-		return arm_pos_;
+	const Translation2d& armPos() const {
+		return arm_.pos();
 	}
 
-	void setBumperPos(const QPointF& pos) {
-		if (MathUtils::epsilonEqual(pos.x(), bumper_pos_.x()) == false || MathUtils::epsilonEqual(pos.y(), bumper_pos_.y()) == false) {
+	void setBumperPos(const Translation2d& pos) {
+		if (MathUtils::epsilonEqual(pos.getX(), bumper_pos_.getX()) == false || MathUtils::epsilonEqual(pos.getY(), bumper_pos_.getY()) == false) {
 			bumper_pos_ = pos;
 			somethingChanged(ChangeType::BumperPos);
 		}
 	}
 
-	const QPointF& bumperPos() const {
+	const Translation2d& bumperPos() const {
 		return bumper_pos_;
 	}
 
-	void setBumperSize(const QSizeF& sz) {
-		if (MathUtils::epsilonEqual(sz.width(), bumper_size_.width()) == false || MathUtils::epsilonEqual(sz.height(), bumper_size_.height()) == false) {
+	void setBumperSize(const Translation2d& sz) {
+		if (MathUtils::epsilonEqual(sz.getX(), bumper_size_.getX()) == false || MathUtils::epsilonEqual(sz.getY(), bumper_size_.getY()) == false) {
 			bumper_size_ = sz;
 			somethingChanged(ChangeType::BumperSize);
 		}
 	}
 
-	const QSizeF& bumperSize() const {
+	const Translation2d& bumperSize() const {
 		return bumper_size_;
 	}
 
-	const QVector<QPointF>& targets() const {
+	const QVector<Translation2d>& targets() const {
 		return targets_;
 	}
 
@@ -90,7 +96,7 @@ public:
 		somethingChanged(ChangeType::Targets);
 	}
 
-	void addTarget(const QPointF& t) {
+	void addTarget(const Translation2d& t) {
 		targets_.push_back(t);
 		somethingChanged(ChangeType::Targets);
 	}
@@ -100,23 +106,37 @@ public:
 		somethingChanged(ChangeType::Targets);
 	}
 
+	const QVector<JointDataModel>& joints() const {
+		return arm_.joints();
+	}
+
 	int jointCount() const {
-		return joints_.count();
+		return arm_.count();
 	}
 
 	const JointDataModel& jointModel(int which) const {
-		return joints_[which];
+		return arm_.at(which);
 	}
 
 	void addJointModel(const JointDataModel& model) {
-		joints_.push_back(model);
+		arm_.addJoint(model);
 		somethingChanged(ChangeType::AddJoint);
 	}
 
 	void replaceJointModel(int which, const JointDataModel& model) {
-		joints_[which] = model;
+		arm_.replaceJoint(which, model);
 		somethingChanged(ChangeType::UpdateJoint);
 	}
+
+	void setJointAngle(int which, double angle) {
+		arm_.setJointAngle(which, angle);
+		somethingChanged(ChangeType::UpdateJoint);
+	}
+
+	const RobotArm& arm() const {
+		return arm_;
+	}
+
 
 	bool hasPath(const QString& name) const {
 		return paths_.contains(name);
@@ -163,12 +183,12 @@ public:
 		emit dataChanged(ChangeType::PathPoint);
 	}
 
-	static bool parseNamedPosition(const QJsonObject& obj, const QString& name, QString& err, QPointF& pos);
-	static bool parseNamedSize(const QJsonObject& obj, const QString& name, QString& err, QSizeF& sz);
+	static bool parseNamedPosition(const QJsonObject& obj, const QString& name, QString& err, Translation2d& pos);
+	static bool parseNamedSize(const QJsonObject& obj, const QString& name, QString& err, Translation2d& sz);
 
-	static bool parsePosition(const QJsonObject& obj, const QString& name, QString& err, QPointF& pos);
+	static bool parsePosition(const QJsonObject& obj, const QString& name, QString& err, Translation2d& pos);
 	static bool parsePose(const QJsonObject& obj, const QString& name, QString& err, Pose2d& pos);
-	static bool parseSize(const QJsonObject& obj, const QString& name, QString& err, QSizeF& sz);
+	static bool parseSize(const QJsonObject& obj, const QString& name, QString& err, Translation2d& sz);
 
 signals:
 	void dataChanged(ChangeType type);
@@ -192,25 +212,17 @@ private:
 	//
 	bool dirty_;
 
-	//
-	// The position of the ARM relative to the origin of the coordainte system
-	//
-	QPointF arm_pos_;
+	RobotArm arm_;
 
 	//
 	// The position fo the bumpers reltive to the origin of the coordinate system
 	//
-	QPointF bumper_pos_;
+	Translation2d bumper_pos_;
 
 	//
 	// The height and width of the bumpers
 	//
-	QSizeF bumper_size_;
-
-	//
-	// The joints that make up the ARM
-	//
-	QVector<JointDataModel> joints_;
+	Translation2d bumper_size_;
 
 	//
 	// The arms paths
@@ -220,5 +232,5 @@ private:
 	//
 	// The set of targets
 	//
-	QVector<QPointF> targets_;
+	QVector<Translation2d> targets_;
 };

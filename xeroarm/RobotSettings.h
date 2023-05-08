@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Translation2d.h"
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QLabel>
@@ -17,9 +18,9 @@ public:
 
 	void update(const ArmDataModel& model);
 
-	QPointF getArmPos();
-	QPointF getBumperPos();
-	QSizeF getBumperSize();
+	Translation2d getArmPos();
+	Translation2d getBumperPos();
+	Translation2d getBumperSize();
 
 signals:
 	void settingsChanged(ChangeType type);

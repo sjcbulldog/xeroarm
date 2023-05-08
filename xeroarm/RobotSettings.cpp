@@ -7,6 +7,7 @@ RobotSettings::RobotSettings(QWidget* parent) : QFrame(parent)
 {
 	QDoubleValidator* valid;
 	QGridLayout* lay = new QGridLayout();
+	lay->setAlignment(Qt::AlignTop);
 
 	setFrameShape(QFrame::StyledPanel);
 
@@ -104,25 +105,25 @@ void RobotSettings::armPosChanged()
 	emit settingsChanged(ChangeType::ArmPos);
 }
 
-QPointF RobotSettings::getArmPos()
+Translation2d RobotSettings::getArmPos()
 {
-	return QPointF(arm_pos_x_->text().toDouble(), arm_pos_y_->text().toDouble());
+	return Translation2d(arm_pos_x_->text().toDouble(), arm_pos_y_->text().toDouble());
 }
 
-QPointF RobotSettings::getBumperPos()
+Translation2d RobotSettings::getBumperPos()
 {
-	return QPointF(bumper_pos_x_->text().toDouble(), bumper_pos_y_->text().toDouble());
+	return Translation2d(bumper_pos_x_->text().toDouble(), bumper_pos_y_->text().toDouble());
 }
 
-QSizeF RobotSettings::getBumperSize()
+Translation2d RobotSettings::getBumperSize()
 {
-	return QSizeF(bumper_size_x_->text().toDouble(), bumper_size_y_->text().toDouble());
+	return Translation2d(bumper_size_x_->text().toDouble(), bumper_size_y_->text().toDouble());
 }
 
 void RobotSettings::update(const ArmDataModel& model)
 {
-	bumper_pos_x_->setText(QString::number(model.bumperPos().x(), 'f', 2));
-	bumper_pos_y_->setText(QString::number(model.bumperPos().y(), 'f', 2));
-	arm_pos_x_->setText(QString::number(model.armPos().x(), 'f', 2));
-	arm_pos_y_->setText(QString::number(model.armPos().y(), 'f', 2));
+	bumper_pos_x_->setText(QString::number(model.bumperPos().getX(), 'f', 2));
+	bumper_pos_y_->setText(QString::number(model.bumperPos().getY(), 'f', 2));
+	arm_pos_x_->setText(QString::number(model.armPos().getX(), 'f', 2));
+	arm_pos_y_->setText(QString::number(model.armPos().getY(), 'f', 2));
 }

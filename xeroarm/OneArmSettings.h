@@ -27,6 +27,14 @@ public:
 		return current_->text().toDouble();
 	}
 
+	double maxVelocity() {
+		return maxv_->text().toDouble();
+	}
+
+	double maxAccel() {
+		return maxa_->text().toDouble();
+	}
+
 	QVector<QPair<double, double>> keepOuts();
 
 	void update(const JointDataModel& model);
@@ -38,6 +46,8 @@ private:
 	void lengthChanged();
 	void initialPosChanged();
 	void currentChanged();
+	void maxvChanged();
+	void maxaChanged();
 	void keepOutDoubleClicked(QListWidgetItem* item);
 	void keepOutChanged(QListWidgetItem* item);
 
@@ -60,6 +70,12 @@ private:
 
 	QLabel* current_label_;
 	QLineEdit* current_;
+
+	QLabel* maxv_label_;
+	QLineEdit* maxv_;
+
+	QLabel* maxa_label_;
+	QLineEdit* maxa_;
 
 	QLabel* keepout_label_;
 	QListWidget* keepout_;

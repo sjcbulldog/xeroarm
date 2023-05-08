@@ -11,12 +11,25 @@ public:
 		angle_ = 0.0;
 		length_ = 0.0;
 		initial_angle_ = 0.0;
+		maxa_ = 0.0;
+		maxv_ = 0.0;
 	}
 
 	JointDataModel(double length, double init) {
 		length_ = length;
 		angle_ = init;
 		initial_angle_ = init;
+		maxv_ = 0.0;
+		maxa_ = 0.0;
+	}
+
+	bool isAngleValid(double a) const {
+		for (const QPair<double, double>& pair : keep_out_regions_) {
+			if (a >= pair.first && a <= pair.second)
+				return false;
+		}
+
+		return true;
 	}
 
 	double angle() const {
@@ -43,6 +56,22 @@ public:
 		initial_angle_ = d;
 	}
 
+	double maxVelocity() const {
+		return maxv_;
+	}
+
+	void setMaxVelocity(double d) {
+		maxv_ = d;
+	}
+
+	double maxAccel() const {
+		return maxv_;
+	}
+
+	void setMaxAccel(double d) {
+		maxv_ = d;
+	}
+
 	void clearKeepOut() {
 		keep_out_regions_.clear();
 	}
@@ -59,7 +88,7 @@ public:
 		return keep_out_regions_.at(which);
 	}
 
-	QJsonObject toJson();
+	QJsonObject toJson() const;
 	bool fromJson(const QJsonObject& obj, QString& error);
 
 private:
@@ -77,6 +106,16 @@ private:
 	// The initial angle (in degrees) for the ARM when at rest
 	//
 	double initial_angle_;
+
+	//
+	// Max velocity of this joint in degrees/second
+	//
+	double maxv_;
+
+	//
+	// Max acceleration of this joing in degrees/second/second
+	//
+	double maxa_;
 
 	//
 	// A set of rotation values that define regions where a joint cannot

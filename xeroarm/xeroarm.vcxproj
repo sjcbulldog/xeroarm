@@ -87,6 +87,8 @@
     <QtMoc Include="xeroarm.h" />
     <ClCompile Include="ArmDataModel.cpp" />
     <ClCompile Include="ArmDisplay.cpp" />
+    <ClCompile Include="ArmMotionProfile.cpp" />
+    <ClCompile Include="ArmMotionProfileGenerator.cpp" />
     <ClCompile Include="ArmPath.cpp" />
     <ClCompile Include="ArmSettings.cpp" />
     <ClCompile Include="CentralWidget.cpp" />
@@ -95,7 +97,9 @@
     <ClCompile Include="OneArmSettings.cpp" />
     <ClCompile Include="PathsDisplayWidget.cpp" />
     <ClCompile Include="Pose2d.cpp" />
+    <ClCompile Include="Pose2dTrajectory.cpp" />
     <ClCompile Include="QuinticHermiteSpline.cpp" />
+    <ClCompile Include="RobotArm.cpp" />
     <ClCompile Include="RobotSettings.cpp" />
     <ClCompile Include="Rotation2d.cpp" />
     <ClCompile Include="SplinePair.cpp" />
@@ -120,10 +124,14 @@
     <QtMoc Include="RobotSettings.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ArmMotionProfile.h" />
+    <ClInclude Include="ArmMotionProfileGenerator.h" />
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="NoEditDelegate.h" />
     <ClInclude Include="Pose2d.h" />
+    <ClInclude Include="Pose2dTrajectory.h" />
     <ClInclude Include="QuinticHermiteSpline.h" />
+    <ClInclude Include="RobotArm.h" />
     <ClInclude Include="Rotation2d.h" />
     <ClInclude Include="SplinePair.h" />
     <ClInclude Include="Translation2d.h" />

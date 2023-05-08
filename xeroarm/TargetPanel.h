@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Translation2d.h"
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QListWidget>
@@ -13,7 +14,7 @@ class TargetPanel : public QFrame
 public:
 	TargetPanel(QWidget* parent);
 	void update(ArmDataModel& model);
-	QVector<QPointF> targets();
+	QVector<Translation2d> targets();
 
 signals:
 	void targetsChanged();

@@ -57,7 +57,7 @@ void ArmSettings::modelDataChanged()
 void ArmSettings::targetSettingChanged()
 {
 	model_.clearTargets();
-	for (const QPointF& pt : targets_->targets()) {
+	for (const Translation2d& pt : targets_->targets()) {
 		model_.addTarget(pt);
 	}
 }
@@ -100,6 +100,14 @@ void ArmSettings::jointSettingChanged(int which, ChangeType type)
 
 	case ChangeType::InitialAngle:
 		dm.setinitialAngle(settings_[which]->initialAngle());
+
+	case ChangeType::MaxVelocity:
+		dm.setMaxVelocity(settings_[which]->maxVelocity());
+		break;
+
+	case ChangeType::MaxAccel:
+		dm.setMaxAccel(settings_[which]->maxAccel());
+		break;
 	}
 
 	model_.replaceJointModel(which, dm);

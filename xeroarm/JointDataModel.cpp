@@ -2,13 +2,15 @@
 #include "JsonFileKeywords.h"
 #include <QtCore/QJsonArray>
 
-QJsonObject JointDataModel::toJson()
+QJsonObject JointDataModel::toJson() const
 {
 	QJsonObject obj;
 	QJsonArray jarray;
 
 	obj[JsonFileKeywords::LengthKeyword] = length_;
-	obj[JsonFileKeywords::initialAngleKeyword] = initial_angle_;
+	obj[JsonFileKeywords::InitialAngleKeyword] = initial_angle_;
+	obj[JsonFileKeywords::MaxVelocityKeyword] = maxv_;
+	obj[JsonFileKeywords::MaxAccelKeyword] = maxa_;
 
 	for (int i = 0; i < keep_out_regions_.count() ; i++) {
 		QJsonObject keep;
@@ -36,17 +38,41 @@ bool JointDataModel::fromJson(const QJsonObject& obj, QString& error)
 
 	length_ = obj.value(JsonFileKeywords::LengthKeyword).toDouble();
 
-	if (!obj.contains(JsonFileKeywords::initialAngleKeyword)) {
-		error = "json file does not contains '" + QString(JsonFileKeywords::initialAngleKeyword) + "' member";
+	if (!obj.contains(JsonFileKeywords::InitialAngleKeyword)) {
+		error = "json file does not contains '" + QString(JsonFileKeywords::InitialAngleKeyword) + "' member";
 		return false;
 	}
 
-	if (!obj.value(JsonFileKeywords::initialAngleKeyword).isDouble()) {
-		error = "json file contains member '" + QString(JsonFileKeywords::initialAngleKeyword) + "', but it is not a double";
+	if (!obj.value(JsonFileKeywords::InitialAngleKeyword).isDouble()) {
+		error = "json file contains member '" + QString(JsonFileKeywords::InitialAngleKeyword) + "', but it is not a double";
 		return false;
 	}
 
-	initial_angle_ = obj.value(JsonFileKeywords::initialAngleKeyword).toDouble();
+	initial_angle_ = obj.value(JsonFileKeywords::InitialAngleKeyword).toDouble();
+
+	if (!obj.contains(JsonFileKeywords::MaxVelocityKeyword)) {
+		error = "json file does not contains '" + QString(JsonFileKeywords::MaxVelocityKeyword) + "' member";
+		return false;
+	}
+
+	if (!obj.value(JsonFileKeywords::MaxVelocityKeyword).isDouble()) {
+		error = "json file contains member '" + QString(JsonFileKeywords::MaxVelocityKeyword) + "', but it is not a double";
+		return false;
+	}
+
+	maxv_ = obj.value(JsonFileKeywords::MaxVelocityKeyword).toDouble();
+
+	if (!obj.contains(JsonFileKeywords::MaxAccelKeyword)) {
+		error = "json file does not contains '" + QString(JsonFileKeywords::MaxAccelKeyword) + "' member";
+		return false;
+	}
+
+	if (!obj.value(JsonFileKeywords::MaxAccelKeyword).isDouble()) {
+		error = "json file contains member '" + QString(JsonFileKeywords::MaxAccelKeyword) + "', but it is not a double";
+		return false;
+	}
+
+	maxa_ = obj.value(JsonFileKeywords::MaxAccelKeyword).toDouble();
 
 	if (!obj.contains(JsonFileKeywords::KeepOutKeyword)) {
 		error = "json file does not contains '" + QString(JsonFileKeywords::KeepOutKeyword) + "' member";

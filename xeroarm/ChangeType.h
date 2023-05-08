@@ -7,6 +7,8 @@ enum class ChangeType
 	InitialAngle,
 	CurrentAngle,
 	ArmLength,
+	MaxVelocity,
+	MaxAccel,
 	BumperPos,
 	BumperSize,
 	ArmPos,

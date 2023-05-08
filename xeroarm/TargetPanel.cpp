@@ -8,6 +8,8 @@ TargetPanel::TargetPanel(QWidget* parent) : QFrame(parent)
 	setFrameShape(QFrame::StyledPanel);
 
 	QVBoxLayout* layout = new QVBoxLayout();
+	layout->setAlignment(Qt::AlignTop);
+
 	target_label_ = new QLabel("Targets");
 	QFont font = target_label_->font();
 	font.setBold(true);
@@ -20,8 +22,8 @@ TargetPanel::TargetPanel(QWidget* parent) : QFrame(parent)
 	is_editing_target_ = false;
 
 	targets_ = new QListWidget();
-	targets_->setMaximumHeight(100);
-	targets_->setMaximumWidth(160);
+	targets_->setMaximumHeight(400);
+	targets_->setMaximumWidth(240);
 	targets_->setEditTriggers(QAbstractItemView::EditTrigger::DoubleClicked);
 	layout->addWidget(targets_);
 
@@ -82,8 +84,8 @@ void TargetPanel::update(ArmDataModel& model)
 	if (!is_editing_target_) {
 		targets_->clear();
 
-		for (const QPointF& pt : model.targets()) {
-			QString entry = QString::number(pt.x()) + ", " + QString::number(pt.y());
+		for (const Translation2d& pt : model.targets()) {
+			QString entry = QString::number(pt.getX()) + ", " + QString::number(pt.getY());
 			QListWidgetItem* item = new QListWidgetItem(entry);
 			item->setFlags(item->flags() | Qt::ItemFlag::ItemIsEditable);
 			targets_->addItem(item);
@@ -95,9 +97,9 @@ void TargetPanel::update(ArmDataModel& model)
 	}
 }
 
-QVector<QPointF> TargetPanel::targets()
+QVector<Translation2d> TargetPanel::targets()
 {
-	QVector<QPointF> ret;
+	QVector<Translation2d> ret;
 	QVector<int> remove;
 
 	for (int i = 0; i < targets_->count(); i++) {
@@ -113,7 +115,7 @@ QVector<QPointF> TargetPanel::targets()
 		else {
 			double x = items.at(0).toDouble();
 			double y = items.at(1).toDouble();
-			ret.push_back(QPointF(x, y));
+			ret.push_back(Translation2d(x, y));
 		}
 	}
 

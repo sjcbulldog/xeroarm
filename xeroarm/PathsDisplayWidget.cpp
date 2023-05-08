@@ -79,8 +79,8 @@ void PathsDisplayWidget::addPath()
 	QString name = findName();
 
 	auto path = std::make_shared<ArmPath>(name);
-	QPointF inipt = model_.getInitialArmPos();
-	path->addPoint(Pose2d(inipt.x(), inipt.y()));
+	Translation2d inipt = model_.getInitialArmPos();
+	path->addPoint(Pose2d(inipt.getX(), inipt.getY()));
 	path->addPoint(Pose2d(40.0, 40.0, Rotation2d::fromDegrees(45.0)));
 	model_.addPath(path);
 }

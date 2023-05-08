@@ -7,6 +7,8 @@
 OneArmSettings::OneArmSettings(int which, const QString &title, QWidget *parent) : QFrame(parent)
 {
 	QGridLayout* lay = new QGridLayout();
+	lay->setAlignment(Qt::AlignTop);
+
 	int row = 0;
 
 	setFrameShape(QFrame::StyledPanel);
@@ -53,6 +55,25 @@ OneArmSettings::OneArmSettings(int which, const QString &title, QWidget *parent)
 	current_->setText("0.0");
 	lay->addWidget(current_, row, 1, Qt::AlignLeft);
 	(void)connect(current_, &QLineEdit::editingFinished, this, &OneArmSettings::currentChanged);
+	row++;
+
+	maxv_label_ = new QLabel("Max Velocity");
+	lay->addWidget(maxv_label_, row, 0, Qt::AlignRight);
+
+	maxv_ = new QLineEdit();
+	valid = new QDoubleValidator();
+	maxv_->setValidator(valid);
+	maxv_->setText("0.0");
+	lay->addWidget(maxv_, row, 1, Qt::AlignLeft);
+	(void)connect(maxv_, &QLineEdit::editingFinished, this, &OneArmSettings::maxvChanged);
+	row++;
+
+	maxa_ = new QLineEdit();
+	valid = new QDoubleValidator();
+	maxa_->setValidator(valid);
+	maxa_->setText("0.0");
+	lay->addWidget(maxa_, row, 1, Qt::AlignLeft);
+	(void)connect(maxa_, &QLineEdit::editingFinished, this, &OneArmSettings::maxaChanged);
 	row++;
 
 	keepout_label_ = new QLabel("Keep Out Regions");
@@ -104,12 +125,12 @@ bool OneArmSettings::isKeepOutValid(const QString& text)
 
 	QDoubleValidator val;
 	int pos = 0;
-	QString str = items.at(0);
+	QString str = items.at(0).trimmed();
 	if (val.validate(str, pos) != QValidator::Acceptable)
 		return false;
 
 	pos = 0;
-	str = items.at(1);
+	str = items.at(1).trimmed();
 	if (val.validate(str, pos) != QValidator::Acceptable)
 		return false;
 
@@ -121,6 +142,8 @@ void OneArmSettings::update(const JointDataModel& model)
 	length_->setText(QString::number(model.length(), 'f', 2));
 	current_->setText(QString::number(model.angle(), 'f', 2));
 	initial_pos_->setText(QString::number(model.initialAngle(), 'f', 2));
+	maxv_->setText(QString::number(model.maxVelocity(), 'f', 2));
+	maxa_->setText(QString::number(model.maxAccel(), 'f', 2));
 
 	keepout_->clear();
 	for (int i = 0; i < model.keepOutCount(); i++) {
@@ -149,6 +172,16 @@ void OneArmSettings::initialPosChanged()
 void OneArmSettings::currentChanged()
 {
 	emit settingsChanged(which_, ChangeType::CurrentAngle);
+}
+
+void OneArmSettings::maxvChanged()
+{
+	emit settingsChanged(which_, ChangeType::MaxVelocity);
+}
+
+void OneArmSettings::maxaChanged()
+{
+	emit settingsChanged(which_, ChangeType::MaxAccel);
 }
 
 QVector<QPair<double, double>> OneArmSettings::keepOuts()

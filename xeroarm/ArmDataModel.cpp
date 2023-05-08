@@ -9,33 +9,10 @@ ArmDataModel::ArmDataModel()
 	JointDataModel model(30.0, 0.0);
 	addJointModel(model);
 	addJointModel(model);
+	addJointModel(model);
 	dirty_ = false;
 }
 
-void ArmDataModel::setToInitialArmPos()
-{
-	for (int i = 0; i < jointCount(); i++) {
-		JointDataModel model = jointModel(i);
-		model.setAngle(model.initialAngle());
-		replaceJointModel(i, model);
-	}
-}
-
-QPointF ArmDataModel::getInitialArmPos()
-{
-	QPointF start(armPos().x(), armPos().y());
-	double baseangle = 0.0;
-
-	for (int i = 0; i < jointCount(); i++) {
-		double angle = baseangle + jointModel(i).initialAngle() * M_PI / 180.0;
-		double length = jointModel(i).length();
-
-		start = QPointF(start.x() + std::cos(angle) * length, start.y() + std::sin(angle) * length);
-		baseangle = angle;
-	}
-
-	return start;
-}
 
 void ArmDataModel::somethingChanged(ChangeType type)
 {
@@ -84,7 +61,7 @@ bool ArmDataModel::parsePose(const QJsonObject& pos, const QString& name, QStrin
 	return true;
 }
 
-bool ArmDataModel::parseNamedPosition(const QJsonObject& obj, const QString& name, QString& error, QPointF& posv)
+bool ArmDataModel::parseNamedPosition(const QJsonObject& obj, const QString& name, QString& error, Translation2d& posv)
 {
 	QString elem;
 
@@ -109,7 +86,7 @@ bool ArmDataModel::parseNamedPosition(const QJsonObject& obj, const QString& nam
 	return parsePosition(obj.value(elem).toObject(), name, error, posv);
 }
 
-bool ArmDataModel::parsePosition(const QJsonObject& pos, const QString& name, QString& error, QPointF& posv)
+bool ArmDataModel::parsePosition(const QJsonObject& pos, const QString& name, QString& error, Translation2d& posv)
 {
 	if (!pos.contains(JsonFileKeywords::XKeyword)) {
 		error = "json file does not contains '" + name + JsonFileKeywords::XKeyword + "' member";
@@ -133,11 +110,11 @@ bool ArmDataModel::parsePosition(const QJsonObject& pos, const QString& name, QS
 	}
 	double y = pos.value(JsonFileKeywords::YKeyword).toDouble();
 
-	posv = QPointF(x, y);
+	posv = Translation2d(x, y);
 	return true;
 }
 
-bool ArmDataModel::parseNamedSize(const QJsonObject& obj, const QString& name, QString& error, QSizeF& szval)
+bool ArmDataModel::parseNamedSize(const QJsonObject& obj, const QString& name, QString& error, Translation2d& szval)
 {
 	QString elem;
 
@@ -162,7 +139,7 @@ bool ArmDataModel::parseNamedSize(const QJsonObject& obj, const QString& name, Q
 	return parseSize(obj.value(elem).toObject(), name, error, szval);
 }
 
-bool ArmDataModel::parseSize(const QJsonObject& sz, const QString& name, QString& error, QSizeF& szval)
+bool ArmDataModel::parseSize(const QJsonObject& sz, const QString& name, QString& error, Translation2d& szval)
 {
 	if (!sz.contains(JsonFileKeywords::WidthKeyword)) {
 		error = "json file does not contains '" + name + JsonFileKeywords::WidthKeyword + "' member";
@@ -186,7 +163,7 @@ bool ArmDataModel::parseSize(const QJsonObject& sz, const QString& name, QString
 	}
 	double height = sz.value(JsonFileKeywords::HeightKeyword).toDouble();
 
-	szval = QSize(width, height);
+	szval = Translation2d(width, height);
 	return true;
 }
 
@@ -204,8 +181,10 @@ bool ArmDataModel::parseRobot(const QJsonObject& obj, QString& error)
 
 	QJsonObject robot = obj.value(JsonFileKeywords::RobotKeyword).toObject();
 
-	if (!parseNamedPosition(robot, JsonFileKeywords::ArmPosKeyword, error, arm_pos_))
+	Translation2d temp;
+	if (!parseNamedPosition(robot, JsonFileKeywords::ArmPosKeyword, error, temp))
 		return false;
+	arm_.setPos(temp);
 
 	if (!parseNamedPosition(robot, JsonFileKeywords::BumperPosKeyword, error, bumper_pos_))
 		return false;
@@ -296,7 +275,7 @@ bool ArmDataModel::parseTargets(const QJsonObject& obj, QString& error)
 			return false;
 		}
 
-		QPointF pt;
+		Translation2d pt;
 		QString name = QString(JsonFileKeywords::TargetsKeyword) + " - entry " + QString::number(i);
 		if (!parsePosition(jarray.at(i).toObject(), name, error, pt))
 			return false;
@@ -358,8 +337,8 @@ QJsonArray ArmDataModel::targetsToJson()
 	for (int i = 0; i < targets_.size(); i++) {
 		QJsonObject target;
 
-		target["x"] = targets_[i].x();
-		target["y"] = targets_[i].y();
+		target["x"] = targets_[i].getX();
+		target["y"] = targets_[i].getY();
 		ret.push_back(target);
 	}
 
@@ -370,8 +349,8 @@ QJsonArray ArmDataModel::jointsToJson()
 {
 	QJsonArray ret;
 
-	for (int i = 0; i < joints_.size(); i++) {
-		QJsonObject obj = joints_[i].toJson();
+	for (int i = 0; i < arm_.count(); i++) {
+		QJsonObject obj = arm_.at(i).toJson();
 		ret.push_back(obj);
 	}
 
@@ -398,16 +377,16 @@ bool ArmDataModel::save(const QString& path, QString& error)
 	QJsonObject target;
 	QJsonArray arms;
 
-	pt[JsonFileKeywords::XKeyword] = arm_pos_.x();
-	pt[JsonFileKeywords::YKeyword] = arm_pos_.y();
+	pt[JsonFileKeywords::XKeyword] = arm_.pos().getX();
+	pt[JsonFileKeywords::YKeyword] = arm_.pos().getY();
 	robot[JsonFileKeywords::ArmPosKeyword] = pt;
 
-	pt[JsonFileKeywords::XKeyword] = bumper_pos_.x();
-	pt[JsonFileKeywords::YKeyword] = bumper_pos_.y();
+	pt[JsonFileKeywords::XKeyword] = bumper_pos_.getX();
+	pt[JsonFileKeywords::YKeyword] = bumper_pos_.getY();
 	robot[JsonFileKeywords::BumperPosKeyword] = pt;
 
-	sz[JsonFileKeywords::WidthKeyword] = bumper_size_.width();
-	sz[JsonFileKeywords::HeightKeyword] = bumper_size_.height();
+	sz[JsonFileKeywords::WidthKeyword] = bumper_size_.getX();
+	sz[JsonFileKeywords::HeightKeyword] = bumper_size_.getY();
 	robot[JsonFileKeywords::BumperSizeKeyword] = sz;
 
 	obj[JsonFileKeywords::RobotKeyword] = robot;

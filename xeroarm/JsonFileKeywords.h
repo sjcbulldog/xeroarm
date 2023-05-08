@@ -17,8 +17,10 @@ namespace JsonFileKeywords
 	static constexpr const char* NameKeyword = "name";
 	static constexpr const char* PointsKeyword = "points";
 	static constexpr const char* LengthKeyword = "length";
-	static constexpr const char* initialAngleKeyword = "initial-pos";
+	static constexpr const char* InitialAngleKeyword = "initial-pos";
 	static constexpr const char* KeepOutKeyword = "keepout";
 	static constexpr const char* MaxKeyword = "max";
 	static constexpr const char* MinKeyword = "min";
+	static constexpr const char* MaxVelocityKeyword = "maxv";
+	static constexpr const char* MaxAccelKeyword = "maxa";
 }

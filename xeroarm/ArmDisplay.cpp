@@ -1,5 +1,6 @@
 #include "ArmDisplay.h"
 #include "ArmDataModel.h"
+#include <QtWidgets/QMessageBox>
 #include <QtGui/QPainter>
 #include <QtGui/QMouseEvent>
 
@@ -41,6 +42,9 @@ void ArmDisplay::keyPressEvent(QKeyEvent* ev)
 	if (ev->key() == Qt::Key::Key_R)
 	{
 		model_.setToInitialArmPos();
+	}
+	else if (ev->key() == Qt::Key::Key_T) {
+
 	}
 	else if (ev->key() == Qt::Key::Key_Insert)
 	{
@@ -89,7 +93,21 @@ void ArmDisplay::mousePressEvent(QMouseEvent* ev)
 {
 	selected_ = -1;
 
-	if (ev->buttons() == Qt::LeftButton && path_ != nullptr && xform_.isInvertible()) {
+	QTransform inv = xform_.inverted();
+	QPointF pt = inv.map(ev->pos());
+
+	if (ev->buttons() == Qt::RightButton) {
+		auto angles = model_.arm().inverseKinematics(Translation2d(pt.x(), pt.y()));
+		if (angles.isEmpty()) {
+			QMessageBox::critical(this, "Error", "Cannot find a solution for the point selected");
+		}
+		else {
+			for (int i = 0; i < angles.count(); i++) {
+				model_.setJointAngle(i, angles[i]);
+			}
+		}
+	}
+	else if (ev->buttons() == Qt::LeftButton && path_ != nullptr && xform_.isInvertible()) {
 		QTransform inv = xform_.inverted();
 		QPointF pt = inv.map(ev->pos());
 
@@ -154,31 +172,21 @@ void ArmDisplay::resetDisplay()
 	repaint();
 }
 
-double ArmDisplay::armLength()
-{
-	double maxArmLength = 0.0;
-	for (int i = 0; i < model_.jointCount(); i++) {
-		maxArmLength += model_.jointModel(i).length();
-	}
-
-	return maxArmLength;
-}
-
 QRectF ArmDisplay::armBounds()
 {
-	double length = armLength();
+	double length = model_.arm().maxArmLength();
 
-	double armxmin = model_.armPos().x() - length;
-	double armxmax = model_.armPos().x() + length;
-	double armymin = (model_.armPos().y() < 0.0) ? model_.armPos().y() : 0.0;
-	double armymax = model_.armPos().y() + length;
+	double armxmin = model_.armPos().getX() - length;
+	double armxmax = model_.armPos().getX() + length;
+	double armymin = (model_.armPos().getY() < 0.0) ? model_.armPos().getY() : 0.0;
+	double armymax = model_.armPos().getY() + length;
 
 	return QRectF(armxmin, armymin, armxmax - armxmin, armymax - armymin);
 }
 
 QRectF ArmDisplay::bumperBounds()
 {
-	return QRectF(model_.bumperPos(), model_.bumperSize());
+	return QRectF(model_.bumperPos().getX(), model_.bumperPos().getY(), model_.bumperSize().getX(), model_.bumperSize().getY());
 }
 
 QRectF ArmDisplay::targetBounds()
@@ -188,17 +196,17 @@ QRectF ArmDisplay::targetBounds()
 	if (model_.targets().count() == 0)
 		return r;
 
-	double xmin = model_.targets().at(0).x();
-	double xmax = model_.targets().at(0).x();
-	double ymin = model_.targets().at(0).y();
-	double ymax = model_.targets().at(0).y();
+	double xmin = model_.targets().at(0).getX();
+	double xmax = model_.targets().at(0).getX();
+	double ymin = model_.targets().at(0).getY();
+	double ymax = model_.targets().at(0).getY();
 
 	for (int i = 1; i < model_.targets().count(); i++) {
-		QPointF t = model_.targets().at(i);
-		xmin = std::min(xmin, t.x());
-		xmax = std::max(xmax, t.x());
-		ymin = std::min(ymin, t.y());
-		ymax = std::min(ymax, t.y());
+		Translation2d t = model_.targets().at(i);
+		xmin = std::min(xmin, t.getX());
+		xmax = std::max(xmax, t.getX());
+		ymin = std::min(ymin, t.getY());
+		ymax = std::min(ymax, t.getY());
 	}
 	
 	return QRect(xmin, ymin, xmax - xmin, ymax - ymin);
@@ -375,7 +383,7 @@ void ArmDisplay::drawBumpers(QPainter& p)
 	pn.setWidthF(0.2);
 	p.setPen(pn);
 
-	QRectF r(model_.bumperPos(), model_.bumperSize());
+	QRectF r(model_.bumperPos().getX(), model_.bumperPos().getY(), model_.bumperSize().getX(), model_.bumperSize().getY());
 	p.drawRect(r);
 
 	p.restore();
@@ -389,13 +397,13 @@ void ArmDisplay::drawTargets(QPainter& p)
 	pn.setWidthF(TargetPenSize);
 	p.setPen(pn);
 
-	for (const QPointF& t : model_.targets()) {
-		QPointF p1 = QPoint(t.x() - TargetXSize, t.y());
-		QPointF p2 = QPoint(t.x() + TargetXSize, t.y());
+	for (const Translation2d& t : model_.targets()) {
+		QPointF p1 = QPoint(t.getX() - TargetXSize, t.getY());
+		QPointF p2 = QPoint(t.getX() + TargetXSize, t.getY());
 		p.drawLine(p1, p2);
 
-		p1 = QPoint(t.x(), t.y() - TargetXSize);
-		p2 = QPoint(t.x(), t.y() + TargetXSize);
+		p1 = QPoint(t.getX(), t.getY() - TargetXSize);
+		p2 = QPoint(t.getX(), t.getY() + TargetXSize);
 		p.drawLine(p1, p2);
 	}
 
@@ -419,7 +427,7 @@ void ArmDisplay::drawJoint(QPainter& p, const QPointF& pt)
 
 void ArmDisplay::drawArms(QPainter &p)
 {
-	QPointF start(model_.armPos().x(), model_.armPos().y());
+	QPointF start(model_.armPos().getX(), model_.armPos().getY());
 	double baseangle = 0.0;
 	QPen pen;
 
