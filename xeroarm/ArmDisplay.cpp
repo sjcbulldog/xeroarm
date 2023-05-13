@@ -8,7 +8,10 @@ QVector<QColor> ArmDisplay::colors_ =
 {
 	QColor(0, 0, 255),
 	QColor(0, 255, 0),
-	QColor(255, 0, 0)
+	QColor(255, 0, 0),
+	QColor(255, 255, 0),
+	QColor(0, 255, 255),
+	QColor(255, 0, 255)
 };
 
 ArmDisplay::ArmDisplay(ArmDataModel &model, QWidget* parent) : QWidget(parent), model_(model)
@@ -42,9 +45,14 @@ void ArmDisplay::keyPressEvent(QKeyEvent* ev)
 	if (ev->key() == Qt::Key::Key_R)
 	{
 		model_.setToInitialArmPos();
+		repaint();
 	}
-	else if (ev->key() == Qt::Key::Key_T) {
-
+	else if (ev->key() == Qt::Key::Key_J) {
+		JointDataModel model(30.0, 0.0);
+		model_.addJointModel(model);
+	}
+	else if (ev->key() == Qt::Key::Key_G) {
+		model_.generateTrajectories();
 	}
 	else if (ev->key() == Qt::Key::Key_Insert)
 	{
@@ -61,7 +69,7 @@ void ArmDisplay::keyPressEvent(QKeyEvent* ev)
 			// Move selected waypoint to the one we just created
 			selected_++;
 			emit pathPointSelected(path_, selected_);
-			repaint(geometry());
+			repaint();
 		}
 	}
 }
@@ -97,7 +105,7 @@ void ArmDisplay::mousePressEvent(QMouseEvent* ev)
 	QPointF pt = inv.map(ev->pos());
 
 	if (ev->buttons() == Qt::RightButton) {
-		auto angles = model_.arm().inverseKinematics(Translation2d(pt.x(), pt.y()));
+		auto angles = model_.arm().inverseKinematicsJacobian(Translation2d(pt.x(), pt.y()));
 		if (angles.isEmpty()) {
 			QMessageBox::critical(this, "Error", "Cannot find a solution for the point selected");
 		}

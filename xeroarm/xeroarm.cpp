@@ -4,6 +4,7 @@
 #include <QtWidgets/QDockWidget>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
+#include <QtWidgets/QStatusBar>
 #include <QtGui/QCloseEvent>
 
 xeroarm::xeroarm(QWidget *parent) : QMainWindow(parent)
@@ -27,14 +28,14 @@ xeroarm::xeroarm(QWidget *parent) : QMainWindow(parent)
 		central_->getMainSplitter()->setSizes(sizes);
 	}
 
-	if (settings_.contains(BottomSplitterSettings)) {
+	if (settings_.contains(PlotSplitterSettings)) {
 		QList<int> sizes;
-		QList<QVariant> stored = settings_.value(BottomSplitterSettings).toList();
+		QList<QVariant> stored = settings_.value(PlotSplitterSettings).toList();
 		for (const QVariant& v : stored) {
 			sizes.push_back(v.toInt());
 		}
 
-		central_->getBottomSplitter()->setSizes(sizes);
+		plot_win_->setSizes(sizes);
 	}
 
 	if (QCoreApplication::arguments().count() > 1) {
@@ -49,10 +50,20 @@ xeroarm::xeroarm(QWidget *parent) : QMainWindow(parent)
 			central_->resetDisplay();
 		}
 	}
+
+	status_text_ = new QLabel("Idle");
+	statusBar()->addWidget(status_text_);
+
+	(void)connect(&model_, &ArmDataModel::progress, this, &xeroarm::progress);
 }
 
 xeroarm::~xeroarm()
 {
+}
+
+void xeroarm::progress(const QString& msg)
+{
+	status_text_->setText(msg);
 }
 
 void xeroarm::createWindows()
@@ -74,8 +85,17 @@ void xeroarm::createWindows()
 	waypoint_display_dock_->setWidget(waypoint_display_);
 	addDockWidget(Qt::RightDockWidgetArea, waypoint_display_dock_);
 
+	plot_win_ = new PlotWindow(nullptr);
+	dock_plot_win_ = new QDockWidget(tr("Plot"));
+	dock_plot_win_->setObjectName("plot");
+	dock_plot_win_->setAllowedAreas(Qt::TopDockWidgetArea | Qt::BottomDockWidgetArea);
+	dock_plot_win_->setWidget(plot_win_);
+	addDockWidget(Qt::BottomDockWidgetArea, dock_plot_win_);
+	dock_plot_win_->hide();
+
 	(void)connect(path_display_, &PathsDisplayWidget::pathSelected, central_, &CentralWidget::pathSelected);
 	(void)connect(path_display_, &PathsDisplayWidget::pathSelected, waypoint_display_, &WaypointWindow::setPath);
+	(void)connect(path_display_, &PathsDisplayWidget::pathSelected, plot_win_, &PlotWindow::setPath);
 
 	(void)connect(central_->display(), &ArmDisplay::pathPointSelected, waypoint_display_, &WaypointWindow::setWaypoint);
 }
@@ -100,11 +120,10 @@ void xeroarm::closeEvent(QCloseEvent* ev)
 	settings_.setValue(MainSplitterSettings, params);
 
 	params.clear();
-	for (auto size : central_->getBottomSplitter()->sizes()) {
+	for (auto size : plot_win_->sizes()) {
 		params.push_back(size);
 	}
-	settings_.setValue(BottomSplitterSettings, params);
-
+	settings_.setValue(PlotSplitterSettings, params);
 }
 
 void xeroarm::createMenus()
@@ -130,8 +149,12 @@ void xeroarm::createMenus()
 	act = file_menu_->addAction("Save As ...");
 	connect(act, &QAction::triggered, this, &xeroarm::saveAsFile);
 
-	view_menu_ = new QMenu(tr("&Arm"));
-	menuBar()->addMenu(view_menu_);
+	window_menu_ = new QMenu(tr("&Windows"));
+	menuBar()->addMenu(window_menu_);
+	window_menu_->addAction(path_display_dock_->toggleViewAction());
+	window_menu_->addAction(waypoint_display_dock_->toggleViewAction());
+	window_menu_->addAction(dock_plot_win_->toggleViewAction());
+	window_menu_->addSeparator();
 }
 
 void xeroarm::saveFile()

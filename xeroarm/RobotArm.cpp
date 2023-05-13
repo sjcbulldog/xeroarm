@@ -1,4 +1,8 @@
 #include "RobotArm.h"
+#include <Eigen/Dense>
+#include <Eigen/QR>
+
+using Eigen::MatrixXd;
 
 void RobotArm::setToInitialArmPos()
 {
@@ -43,7 +47,103 @@ Translation2d RobotArm::forwardKinematics(const QVector<double>& angles) const
 	return endpos;
 }
 
-QVector<double> RobotArm::inverseKinematics(const Translation2d& pt, bool initangle) const
+MatrixXd RobotArm::computeJacobian(const QVector<double> &angles) const
+{
+	MatrixXd ret(2, joints_.count());
+
+	//
+	// Perform forward kinematics, translate result back to an origin at the
+	// base of joint 0.
+	//
+	Translation2d here = forwardKinematics(angles).translateBy(pos_.inverse());
+
+	for (int i = 0; i < joints_.count(); i++) {
+		QVector<double> deltaangles = angles;
+		deltaangles[i] += deltaTheta;
+
+		Translation2d newhere = forwardKinematics(deltaangles).translateBy(pos_.inverse());
+		ret(0, i) = (newhere.getX() - here.getX());
+		ret(1, i) = (newhere.getY() - here.getY());
+	}
+
+	return ret;
+}
+
+static QString matrixToString(const MatrixXd& m)
+{
+	QString out;
+
+	out += "rows " + QString::number(m.rows());
+	out += ", cols " + QString::number(m.cols());
+	for (int row = 0; row < m.rows(); row++) {
+		out += ", row " + QString::number(row) + " ";
+		for (int col = 0; col < m.cols(); col++) {
+			out += " " + QString::number(m(row, col));
+		}
+	}
+
+	return out;
+}
+
+static QString vectorToString(const QVector<double>& v)
+{
+	QString out;
+
+	out += "count " + QString::number(v.count());
+	out += " data";
+	for (int i = 0; i < v.count(); i++) {
+		out += " " + QString::number(v.at(i));
+	}
+	return out;
+}
+
+QVector<double> RobotArm::inverseKinematicsJacobian(const Translation2d& pt) const
+{
+	const double alpha = 0.5;
+	int iters = 0;
+
+	QVector<double> current(joints_.count());
+	for (int i = 0; i < joints_.count(); i++) {
+		current[i] = joints_.at(i).initialAngle();
+	}
+	Translation2d curpos = forwardKinematics(current).translateBy(pos_.inverse());
+
+	while (curpos.distance(pt) > arrivedThreshold)
+	{
+		qDebug() << "-----------------------------------------------------------------";
+		qDebug() << "iter: " << iters;
+		qDebug() << "angles: " << vectorToString(current);
+		qDebug() << "target: " << QString::number(pt.getX()) << ", " << QString::number(pt.getY());
+		qDebug() << "curpos: " << QString::number(curpos.getX()) << ", " << QString::number(curpos.getY());
+
+		MatrixXd jacobian = computeJacobian(current);
+		qDebug() << "IK: jacobian " << matrixToString(jacobian);
+
+		MatrixXd inverse = jacobian.completeOrthogonalDecomposition().pseudoInverse();
+		qDebug() << "IK: inverse " + matrixToString(inverse);
+
+		MatrixXd target(2, 1);
+		target(0, 0) = pt.getX() - curpos.getX();
+		target(1, 0) = pt.getY() - curpos.getY();
+
+		MatrixXd dt = inverse * target;
+		for (int i = 0; i < joints_.count(); i++) {
+			current[i] = current[i] + dt(i) * alpha;
+		}
+
+		curpos = forwardKinematics(current);
+		iters++;
+
+		if (iters > 1000) {
+			current.clear();
+			return current;
+		}
+	}
+
+	return current;
+}
+
+QVector<double> RobotArm::inverseKinematicsSimple(const Translation2d& pt) const
 {
 	QVector<double> current(joints_.count());
 

@@ -3,6 +3,7 @@
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QSplitter>
+#include <QtWidgets/QSlider>
 #include <QtCore/QSettings>
 #include "PathsDisplayWidget.h"
 #include "ArmSettings.h"
@@ -27,18 +28,22 @@ public:
 	}
 
 	QSplitter* getMainSplitter() { return main_;  }
-	QSplitter* getBottomSplitter() { return bottom_; }
 
 	void pathSelected(std::shared_ptr<ArmPath> path);
 
+signals:
+	void changeTime(double t);
+
 private:
 	void dataModelChanged();
+	void timeChanged(int ms);
 
 private:
 	ArmDataModel& model_;
 	ArmSettings* settings_;
 	ArmDisplay* display_;
 	QSplitter* main_;
-	QSplitter* bottom_;
+	QSlider* slider_;
+	std::shared_ptr<ArmPath> path_;
 };
 

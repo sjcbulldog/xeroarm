@@ -4,6 +4,8 @@
 #include <QtCore/QVector>
 #include <QtCore/QPointF>
 #include <QtCore/QJsonObject>
+#include <memory>
+#include "ArmMotionProfile.h"
 #include "Pose2d.h"
 
 class ArmPath
@@ -52,10 +54,19 @@ public:
 		points_[index] = pt;
 	}
 
+	void setProfile(std::shared_ptr<ArmMotionProfile> profile) {
+		profile_ = profile;
+	}
+
+	std::shared_ptr<ArmMotionProfile> profile() {
+		return profile_;
+	}
+
 	QJsonObject toJson();
 	bool fromJson(const QJsonObject& obj, QString &error);
 
 private:
 	QString name_;
 	QVector<Pose2d> points_;
+	std::shared_ptr<ArmMotionProfile> profile_;
 };

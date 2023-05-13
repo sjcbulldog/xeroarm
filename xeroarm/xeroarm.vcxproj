@@ -32,12 +32,12 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
     <QtInstall>6.3.1_msvc2019_64</QtInstall>
-    <QtModules>core;gui;widgets</QtModules>
+    <QtModules>core;gui;widgets;printsupport</QtModules>
     <QtBuildConfig>debug</QtBuildConfig>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
     <QtInstall>6.3.1_msvc2019_64</QtInstall>
-    <QtModules>core;gui;widgets</QtModules>
+    <QtModules>core;gui;widgets;printsupport</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
   </PropertyGroup>
   <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
@@ -58,6 +58,16 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
   </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)eigen-3.4.0\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)eigen-3.4.0\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
     <ClCompile>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
@@ -91,19 +101,24 @@
     <ClCompile Include="ArmMotionProfileGenerator.cpp" />
     <ClCompile Include="ArmPath.cpp" />
     <ClCompile Include="ArmSettings.cpp" />
+    <ClCompile Include="BasePlotWindow.cpp" />
     <ClCompile Include="CentralWidget.cpp" />
     <ClCompile Include="JointDataModel.cpp" />
     <ClCompile Include="MathUtils.cpp" />
+    <ClCompile Include="NodesListWindow.cpp" />
     <ClCompile Include="OneArmSettings.cpp" />
     <ClCompile Include="PathsDisplayWidget.cpp" />
+    <ClCompile Include="PlotWindow.cpp" />
     <ClCompile Include="Pose2d.cpp" />
     <ClCompile Include="Pose2dTrajectory.cpp" />
+    <ClCompile Include="qcustomplot.cpp" />
     <ClCompile Include="QuinticHermiteSpline.cpp" />
     <ClCompile Include="RobotArm.cpp" />
     <ClCompile Include="RobotSettings.cpp" />
     <ClCompile Include="Rotation2d.cpp" />
     <ClCompile Include="SplinePair.cpp" />
     <ClCompile Include="TargetPanel.cpp" />
+    <ClCompile Include="TrajectoryCustomPlotWindow.cpp" />
     <ClCompile Include="Translation2d.cpp" />
     <ClCompile Include="Twist2d.cpp" />
     <ClCompile Include="WaypointWindow.cpp" />
@@ -126,14 +141,20 @@
   <ItemGroup>
     <ClInclude Include="ArmMotionProfile.h" />
     <ClInclude Include="ArmMotionProfileGenerator.h" />
+    <ClInclude Include="BasePlotWindow.h" />
     <ClInclude Include="MathUtils.h" />
+    <ClInclude Include="NodesListWindow.h" />
     <ClInclude Include="NoEditDelegate.h" />
+    <ClInclude Include="PlotWindow.h" />
     <ClInclude Include="Pose2d.h" />
+    <ClInclude Include="Pose2dConstrained.h" />
     <ClInclude Include="Pose2dTrajectory.h" />
+    <QtMoc Include="qcustomplot.h" />
     <ClInclude Include="QuinticHermiteSpline.h" />
     <ClInclude Include="RobotArm.h" />
     <ClInclude Include="Rotation2d.h" />
     <ClInclude Include="SplinePair.h" />
+    <ClInclude Include="TrajectoryCustomPlotWindow.h" />
     <ClInclude Include="Translation2d.h" />
     <ClInclude Include="Twist2d.h" />
     <QtMoc Include="WaypointWindow.h" />

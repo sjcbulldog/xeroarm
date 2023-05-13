@@ -16,12 +16,16 @@
 #include <QtCore/QList>
 #include <memory>
 
+class ArmMotionProfile;
+
 class ArmDataModel : public QObject
 {
 	Q_OBJECT
 
 public:
 	ArmDataModel();
+
+	void generateTrajectories();
 
 	Translation2d getInitialArmPos() {
 		return arm_.getInitialArmPos();
@@ -106,7 +110,7 @@ public:
 		somethingChanged(ChangeType::Targets);
 	}
 
-	const QVector<JointDataModel>& joints() const {
+	QVector<JointDataModel>& joints() {
 		return arm_.joints();
 	}
 
@@ -133,7 +137,7 @@ public:
 		somethingChanged(ChangeType::UpdateJoint);
 	}
 
-	const RobotArm& arm() const {
+	RobotArm& arm() {
 		return arm_;
 	}
 
@@ -192,6 +196,7 @@ public:
 
 signals:
 	void dataChanged(ChangeType type);
+	void progress(const QString& msg);
 
 private:
 	void somethingChanged(ChangeType type);
@@ -227,7 +232,12 @@ private:
 	//
 	// The arms paths
 	//
-	QMap <QString, std::shared_ptr<ArmPath>> paths_;
+	QMap<QString, std::shared_ptr<ArmPath>> paths_;
+
+	//
+	// The motion profiles for each path
+	//
+	QMap<QString, std::shared_ptr<ArmMotionProfile>> profiles_;
 
 	//
 	// The set of targets

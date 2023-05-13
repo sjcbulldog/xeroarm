@@ -37,8 +37,16 @@ public:
 		return pos_;
 	}
 
+	void setTranslation2d(const Translation2d& v) {
+		pos_ = v;
+	}
+
 	const Rotation2d& getRotation() const {
 		return rotation_;
+	}
+
+	void setRotation(const Rotation2d& v) {
+		rotation_ = v;
 	}
 
 	Pose2d transformBy(const Pose2d& other) const;

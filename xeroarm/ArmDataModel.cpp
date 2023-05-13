@@ -1,5 +1,6 @@
 #include "ArmDataModel.h"
 #include "JsonFileKeywords.h"
+#include "ArmMotionProfileGenerator.h"
 #include <QtCore/QFile>
 
 ArmDataModel::ArmDataModel()
@@ -11,6 +12,18 @@ ArmDataModel::ArmDataModel()
 	addJointModel(model);
 	addJointModel(model);
 	dirty_ = false;
+}
+
+void ArmDataModel::generateTrajectories()
+{
+	for (auto path : paths_.values()) {
+		emit progress("Generating paths for path '" + path->name() + "'");
+		ArmMotionProfileGenerator gen(*this);
+		auto profile = gen.generateProfile(path);
+		path->setProfile(profile);
+	}
+
+	emit progress("");
 }
 
 

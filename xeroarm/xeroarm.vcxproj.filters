@@ -103,6 +103,21 @@
     <ClCompile Include="RobotArm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PlotWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BasePlotWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NodesListWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TrajectoryCustomPlotWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qcustomplot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="ArmSettings.h">
@@ -130,6 +145,9 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="WaypointWindow.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="qcustomplot.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
@@ -180,6 +198,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RobotArm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Pose2dConstrained.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlotWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BasePlotWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NodesListWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TrajectoryCustomPlotWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

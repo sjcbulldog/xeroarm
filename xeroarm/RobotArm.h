@@ -4,6 +4,7 @@
 #include "Translation2d.h"
 #include <QtCore/QVector>
 #include <QtCore/QPointF>
+#include <Eigen/Dense>
 
 class RobotArm
 {
@@ -33,6 +34,10 @@ public:
 		joints_[which] = model;
 	}
 
+	QVector<JointDataModel>& joints() {
+		return joints_;
+	}
+
 	const QVector<JointDataModel>& joints() const {
 		return joints_;
 	}
@@ -54,10 +59,18 @@ public:
 	}
 
 	double maxArmLength() const;
-	QVector<double> inverseKinematics(const Translation2d& pt, bool initangle = true) const;
 	Translation2d forwardKinematics(const QVector<double>& angles) const;
 
+	QVector<double> inverseKinematicsSimple(const Translation2d& pt) const;
+	QVector<double> inverseKinematicsJacobian(const Translation2d& pt) const;
+
 private:
+	static constexpr const double deltaTheta = 2.0;
+	static constexpr const double arrivedThreshold = 0.1;
+
+private:
+	Eigen::MatrixXd computeJacobian(const QVector<double>& angles) const;
+
 	double lawOfCosines(double a, double b, double c) {
 		return std::acos((a * a + b * b - c * c) / (2 * a * b));
 	}
