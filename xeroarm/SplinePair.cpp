@@ -20,6 +20,7 @@ SplinePair::SplinePair(const Pose2d &p0, const Pose2d &p1)
 {
 	double dist = p0.distance(p1);
 	double scale = 1.2 * dist;
+
 	double x0 = p0.getTranslation().getX();
 	double x1 = p1.getTranslation().getX();
 	double dx0 = p0.getRotation().getCos() * scale;

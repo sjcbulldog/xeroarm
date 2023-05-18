@@ -12,7 +12,6 @@ enum class ChangeType
 	BumperPos,
 	BumperSize,
 	ArmPos,
-	ArmKeepout,
 	Targets,
 	AddPath,
 	RemovePath,

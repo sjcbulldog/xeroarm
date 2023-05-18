@@ -19,6 +19,7 @@ signals:
 
 private:
 	void selectedItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* prev);
+	void itemSelectionChanged();
 	void prepareCustomMenu(const QPoint &pt);
 
 	void deletePath();

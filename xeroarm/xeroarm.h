@@ -34,7 +34,10 @@ private:
     void save(const QString& path);
     
     void progress(const QString& msg);
-    
+    void timeChange(double t);
+    void mouseMove(const Translation2d& pos);
+
+    void setIKJacobian();
 
 private:
     static constexpr const char* GeometrySetting = "geometry";
@@ -57,11 +60,16 @@ private:
     WaypointWindow* waypoint_display_;
 
     QLabel* time_text_;
+    QLabel* pos_text_;
     QLabel* status_text_;
+    QLabel* ik_type_text_;
 
     QString filename_;
 
     QMenu* file_menu_;
     QMenu* window_menu_;
-
+    QMenu* ik_type_;
+    QActionGroup* ik_type_group_;
+    QAction* ik_jacobian_;
+    QAction* ik_annealing_;
 };

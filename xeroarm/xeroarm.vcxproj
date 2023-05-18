@@ -103,6 +103,9 @@
     <ClCompile Include="ArmSettings.cpp" />
     <ClCompile Include="BasePlotWindow.cpp" />
     <ClCompile Include="CentralWidget.cpp" />
+    <ClCompile Include="FabrikChain.cpp" />
+    <ClCompile Include="FabrikIK.cpp" />
+    <ClCompile Include="JacobianIK.cpp" />
     <ClCompile Include="JointDataModel.cpp" />
     <ClCompile Include="MathUtils.cpp" />
     <ClCompile Include="NodesListWindow.cpp" />
@@ -142,6 +145,12 @@
     <ClInclude Include="ArmMotionProfile.h" />
     <ClInclude Include="ArmMotionProfileGenerator.h" />
     <ClInclude Include="BasePlotWindow.h" />
+    <ClInclude Include="FabrikBone.h" />
+    <ClInclude Include="FabrikChain.h" />
+    <ClInclude Include="FabrikIK.h" />
+    <ClInclude Include="FabrikJoint.h" />
+    <ClInclude Include="InverseKinematics.h" />
+    <ClInclude Include="JacobianIK.h" />
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="NodesListWindow.h" />
     <ClInclude Include="NoEditDelegate.h" />

@@ -43,7 +43,7 @@ public:
 		return isSplitterPositionValid_;
 	}
 	void setPath(std::shared_ptr<ArmPath> path) {
-		if (path->profile() != nullptr) {
+		if (path != nullptr && path->profile() != nullptr) {
 			setTrajectoryGroup(path->profile());
 		}
 	}

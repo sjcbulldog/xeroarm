@@ -35,8 +35,6 @@ public:
 		return maxa_->text().toDouble();
 	}
 
-	QVector<QPair<double, double>> keepOuts();
-
 	void update(const JointDataModel& model);
 
 signals:
@@ -48,10 +46,6 @@ private:
 	void currentChanged();
 	void maxvChanged();
 	void maxaChanged();
-	void keepOutDoubleClicked(QListWidgetItem* item);
-	void keepOutChanged(QListWidgetItem* item);
-
-	bool isKeepOutValid(const QString &text);
 
 private:
 	static constexpr const char* AddHereText = "Add New Keepout";
@@ -76,9 +70,6 @@ private:
 
 	QLabel* maxa_label_;
 	QLineEdit* maxa_;
-
-	QLabel* keepout_label_;
-	QListWidget* keepout_;
 
 	QString prev_text_;
 	bool is_editing_keepout_;

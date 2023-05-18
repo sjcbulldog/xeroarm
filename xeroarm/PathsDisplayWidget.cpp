@@ -9,6 +9,7 @@ PathsDisplayWidget::PathsDisplayWidget(ArmDataModel& model, QWidget* parent) : Q
 	setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(this, &QTreeWidget::customContextMenuRequested, this, &PathsDisplayWidget::prepareCustomMenu);
 	connect(this, &QTreeWidget::currentItemChanged, this, &PathsDisplayWidget::selectedItemChanged);
+	connect(this, &QTreeWidget::itemSelectionChanged, this, &PathsDisplayWidget::itemSelectionChanged);
 	connect(this, &QTreeWidget::itemChanged, this, &PathsDisplayWidget::itemRenamed);
 
 	connect(&model, &ArmDataModel::dataChanged, this, &PathsDisplayWidget::modelChanged);
@@ -98,17 +99,22 @@ void PathsDisplayWidget::deletePath()
 	}
 }
 
-void PathsDisplayWidget::selectedItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* prev)
+void PathsDisplayWidget::itemSelectionChanged()
 {
-	if (current == nullptr) {
+	auto items = selectedItems();
+	if (items.isEmpty()) {
 		current_path_ = nullptr;
 		emit pathSelected(nullptr);
 	}
 	else {
-		auto path = model_.getPathByName(current->text(0));
+		auto path = model_.getPathByName(items.at(0)->text(0));
 		current_path_ = path;
 		emit pathSelected(path);
 	}
+}
+
+void PathsDisplayWidget::selectedItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* prev)
+{
 }
 
 bool PathsDisplayWidget::isValidName(const QString& name)

@@ -16,7 +16,7 @@ QVector<QColor> ArmDisplay::colors_ =
 
 ArmDisplay::ArmDisplay(ArmDataModel &model, QWidget* parent) : QWidget(parent), model_(model)
 {
-	setMinimumSize(800, 600);
+	setMinimumSize(400, 200);
 
 	margins_ = QMargins(10, 10, 10, 40);
 
@@ -25,6 +25,7 @@ ArmDisplay::ArmDisplay(ArmDataModel &model, QWidget* parent) : QWidget(parent), 
 	angles_loc_ = QPoint(10, 10);
 
 	setFocusPolicy(Qt::ClickFocus);
+	setMouseTracking(true);
 
 	triangle_ =
 	{
@@ -34,6 +35,9 @@ ArmDisplay::ArmDisplay(ArmDataModel &model, QWidget* parent) : QWidget(parent), 
 	};
 
 	(void)connect(&model_, &ArmDataModel::dataChanged, this, &ArmDisplay::redraw);
+
+	dragging_ = false;
+	rotating_ = false;
 }
 
 ArmDisplay::~ArmDisplay()
@@ -105,7 +109,7 @@ void ArmDisplay::mousePressEvent(QMouseEvent* ev)
 	QPointF pt = inv.map(ev->pos());
 
 	if (ev->buttons() == Qt::RightButton) {
-		auto angles = model_.arm().inverseKinematicsJacobian(Translation2d(pt.x(), pt.y()));
+		auto angles = model_.arm().inverseKinematics(Translation2d(pt.x(), pt.y()));
 		if (angles.isEmpty()) {
 			QMessageBox::critical(this, "Error", "Cannot find a solution for the point selected");
 		}
@@ -145,10 +149,13 @@ void ArmDisplay::mouseReleaseEvent(QMouseEvent* ev)
 
 void ArmDisplay::mouseMoveEvent(QMouseEvent* ev)
 {
-	if (path_ != nullptr) {
-		QTransform inv = xform_.inverted();
-		QPointF mpt = inv.map(ev->pos());
+	QTransform inv = xform_.inverted();
+	QPointF mpt = inv.map(ev->pos());
 
+	Translation2d trans(mpt.x(), mpt.y());
+	emit mouseMove(trans);
+
+	if (path_ != nullptr) {
 		if (dragging_)
 		{
 			Pose2d old = path_->at(selected_);

@@ -12,20 +12,63 @@ ArmDataModel::ArmDataModel()
 	addJointModel(model);
 	addJointModel(model);
 	dirty_ = false;
+
+	running_ = true;
+	generate_ = std::thread(&ArmDataModel::threadFunction, this);
+}
+
+ArmDataModel::~ArmDataModel()
+{
+	running_ = false;
+	generate_.join();
 }
 
 void ArmDataModel::generateTrajectories()
 {
+	std::lock_guard guard(queue_lock_);
+	queue_.clear();
 	for (auto path : paths_.values()) {
-		emit progress("Generating paths for path '" + path->name() + "'");
-		ArmMotionProfileGenerator gen(*this);
-		auto profile = gen.generateProfile(path);
-		path->setProfile(profile);
+		queue_.push_back(path);
 	}
-
-	emit progress("");
 }
 
+void ArmDataModel::threadFunction()
+{
+	while (running_)
+	{
+		std::shared_ptr<ArmPath> path;
+		{
+			std::lock_guard guard(queue_lock_);
+			if (!queue_.isEmpty()) {
+				path = queue_.front();
+				queue_.pop_front();
+			}
+		}
+
+		if (path != nullptr) {
+			emit progress("Generating data for path '" + path->name() + "'");
+			ArmMotionProfileGenerator gen(*this);
+			auto profile = gen.generateProfile(path);
+			path->setProfile(profile);
+		}
+
+		if (!running_)
+			break;
+
+		bool sleep = false;
+		{
+			std::lock_guard guard(queue_lock_);
+			if (queue_.isEmpty()) {
+				emit progress("Idle");
+				sleep = true;
+			}
+		}
+
+		if (sleep) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		}
+	}
+}
 
 void ArmDataModel::somethingChanged(ChangeType type)
 {
@@ -339,6 +382,8 @@ bool ArmDataModel::load(const QString& path, QString& error)
 
 	setToInitialArmPos();
 	dirty_ = false;
+
+	generateTrajectories();
 
 	return true;
 }

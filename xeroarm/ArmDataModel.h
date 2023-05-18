@@ -15,6 +15,8 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QList>
 #include <memory>
+#include <thread>
+#include <mutex>
 
 class ArmMotionProfile;
 
@@ -24,6 +26,7 @@ class ArmDataModel : public QObject
 
 public:
 	ArmDataModel();
+	virtual ~ArmDataModel();
 
 	void generateTrajectories();
 
@@ -200,6 +203,7 @@ signals:
 
 private:
 	void somethingChanged(ChangeType type);
+	void threadFunction();
 
 	QJsonArray targetsToJson();
 	QJsonArray jointsToJson();
@@ -216,6 +220,8 @@ private:
 	// If true, the model has been changed since it was last saved 
 	//
 	bool dirty_;
+
+	bool running_;
 
 	RobotArm arm_;
 
@@ -243,4 +249,8 @@ private:
 	// The set of targets
 	//
 	QVector<Translation2d> targets_;
+
+	std::mutex queue_lock_;
+	std::thread generate_;
+	QVector<std::shared_ptr<ArmPath>> queue_;
 };

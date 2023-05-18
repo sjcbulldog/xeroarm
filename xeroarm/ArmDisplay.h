@@ -22,6 +22,7 @@ public:
 
 signals:
 	void pathPointSelected(std::shared_ptr<ArmPath> path, int index);
+	void mouseMove(const Translation2d& pt);
 
 protected:
 	void paintEvent(QPaintEvent* ev) override ;

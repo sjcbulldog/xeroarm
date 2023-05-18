@@ -5,6 +5,7 @@
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QStatusBar>
+#include <QtGui/QActionGroup>
 #include <QtGui/QCloseEvent>
 
 xeroarm::xeroarm(QWidget *parent) : QMainWindow(parent)
@@ -51,10 +52,21 @@ xeroarm::xeroarm(QWidget *parent) : QMainWindow(parent)
 		}
 	}
 
+	pos_text_ = new QLabel("Position 0.0, 0.0");
+	statusBar()->addPermanentWidget(pos_text_);
+
+	time_text_ = new QLabel("Time 0.0");
+	statusBar()->addPermanentWidget(time_text_);
+
 	status_text_ = new QLabel("Idle");
 	statusBar()->addWidget(status_text_);
 
+	ik_type_text_ = new QLabel("Jacobian");
+	statusBar()->addPermanentWidget(ik_type_text_);
+
 	(void)connect(&model_, &ArmDataModel::progress, this, &xeroarm::progress);
+	(void)connect(central_, &CentralWidget::mouseMove, this, &xeroarm::mouseMove);
+	(void)connect(central_, &CentralWidget::changeTime, this, &xeroarm::timeChange);
 }
 
 xeroarm::~xeroarm()
@@ -64,6 +76,18 @@ xeroarm::~xeroarm()
 void xeroarm::progress(const QString& msg)
 {
 	status_text_->setText(msg);
+}
+
+void xeroarm::timeChange(double t)
+{
+	QString str = QString::number(t, 'f', 2);
+	time_text_->setText(str);
+}
+
+void xeroarm::mouseMove(const Translation2d& pos)
+{
+	QString str = QString::number(pos.getX(), 'f', 2) + ", " + QString::number(pos.getY(), 'f', 2);
+	pos_text_->setText(str);
 }
 
 void xeroarm::createWindows()
@@ -149,12 +173,26 @@ void xeroarm::createMenus()
 	act = file_menu_->addAction("Save As ...");
 	connect(act, &QAction::triggered, this, &xeroarm::saveAsFile);
 
+	ik_type_ = new QMenu(tr("Inverse Kinematics"));
+	menuBar()->addMenu(ik_type_);
+	ik_type_group_ = new QActionGroup(this);
+
+	ik_jacobian_ = ik_type_->addAction("Jacobian");
+	ik_jacobian_->setCheckable(true);
+	connect(ik_jacobian_, &QAction::triggered, this, &xeroarm::setIKJacobian);
+	ik_type_group_->addAction(ik_jacobian_);
+
 	window_menu_ = new QMenu(tr("&Windows"));
 	menuBar()->addMenu(window_menu_);
 	window_menu_->addAction(path_display_dock_->toggleViewAction());
 	window_menu_->addAction(waypoint_display_dock_->toggleViewAction());
 	window_menu_->addAction(dock_plot_win_->toggleViewAction());
 	window_menu_->addSeparator();
+}
+
+void xeroarm::setIKJacobian()
+{
+	ik_type_text_->setText("Jacobian");
 }
 
 void xeroarm::saveFile()

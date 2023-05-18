@@ -51,6 +51,8 @@ public:
 	double distance(const Translation2d& other) const;
 	bool epsilonEqual(const Translation2d& other, double eps = MathUtils::kEpsilon) const;
 
+	Translation2d normal() const;
+
 private:
 	double x_;
 	double y_;
@@ -61,3 +63,12 @@ static inline Translation2d operator+(const Translation2d& a, const Translation2
 	return Translation2d(a.getX() + b.getX(), a.getY() + b.getY());
 }
 
+static inline Translation2d operator-(const Translation2d& a, const Translation2d& b)
+{
+	return Translation2d(a.getX() - b.getX(), a.getY() - b.getY());
+}
+
+static inline Translation2d operator*(const Translation2d& a, double b)
+{
+	return Translation2d(a.getX() * b, a.getY() * b);
+}

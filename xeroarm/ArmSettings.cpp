@@ -82,14 +82,6 @@ void ArmSettings::jointSettingChanged(int which, ChangeType type)
 	JointDataModel dm = model_.jointModel(which);
 	switch (type)
 	{
-	case ChangeType::ArmKeepout:
-		{
-			dm.clearKeepOut();
-			for (QPair<double, double> p : settings_[which]->keepOuts()) {
-				dm.addKeepOut(p);
-			}
-		}
-		break;
 	case ChangeType::ArmLength:
 		dm.setLength(settings_[which]->length());
 		break;

@@ -70,7 +70,10 @@ QVector<Pose2dTrajectory> ArmMotionProfileGenerator::makeEqualDistance(const QVe
 		double percent = (d - distances[index]) / (distances[index + 1] - distances[index]);
 		Pose2dTrajectory newpttraj(model_.jointCount(), points[index].interpolate(points[index + 1], percent));
 
-		QVector<double> angles = model_.arm().inverseKinematicsJacobian(newpttraj.getTranslation());
+		QVector<double> angles = model_.arm().inverseKinematics(newpttraj.getTranslation());
+		if (angles.isEmpty()) {
+			qDebug() << "IK failed, newpttraj: " << newpttraj.getTranslation().getX() << ", " << newpttraj.getTranslation().getY();
+		}
 		newpttraj.setAngles(angles);
 
 		result.push_back(newpttraj);
@@ -86,7 +89,7 @@ QVector<Pose2dTrajectory> ArmMotionProfileGenerator::makeEqualDistance(const QVe
 
 double ArmMotionProfileGenerator::jointConstrainedVelocity(const Pose2dConstrained& state, const Pose2dConstrained &pred)
 {
-	QVector<double> angles = model_.arm().inverseKinematicsJacobian(state.pose().getTranslation());
+	QVector<double> angles = model_.arm().inverseKinematics(state.pose().getTranslation());
 	return std::numeric_limits<double>::max();
 }
 

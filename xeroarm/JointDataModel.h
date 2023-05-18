@@ -13,6 +13,8 @@ public:
 		initial_angle_ = 0.0;
 		maxa_ = 0.0;
 		maxv_ = 0.0;
+		cw_constraint_ = 0.0;
+		ccw_constraint_ = 0.0;
 	}
 
 	JointDataModel(double length, double init) {
@@ -21,15 +23,8 @@ public:
 		initial_angle_ = init;
 		maxv_ = 0.0;
 		maxa_ = 0.0;
-	}
-
-	bool isAngleValid(double a) const {
-		for (const QPair<double, double>& pair : keep_out_regions_) {
-			if (a >= pair.first && a <= pair.second)
-				return false;
-		}
-
-		return true;
+		cw_constraint_ = 0.0;
+		ccw_constraint_ = 0.0;
 	}
 
 	double angle() const {
@@ -72,22 +67,6 @@ public:
 		maxv_ = d;
 	}
 
-	void clearKeepOut() {
-		keep_out_regions_.clear();
-	}
-
-	void addKeepOut(QPair<double, double> p) {
-		keep_out_regions_.push_back(p);
-	}
-
-	int keepOutCount() const {
-		return keep_out_regions_.count();
-	}
-
-	QPair<double, double> keepOut(int which) const {
-		return keep_out_regions_.at(which);
-	}
-
 	QJsonObject toJson() const;
 	bool fromJson(const QJsonObject& obj, QString& error);
 
@@ -118,9 +97,8 @@ private:
 	double maxa_;
 
 	//
-	// A set of rotation values that define regions where a joint cannot
-	// be.
+	// Constraints for the joint
 	//
-	QVector<QPair<double, double>> keep_out_regions_;
+	double cw_constraint_;
+	double ccw_constraint_;
 };
-

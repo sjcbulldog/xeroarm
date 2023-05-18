@@ -33,10 +33,12 @@ public:
 
 signals:
 	void changeTime(double t);
+	void mouseMove(const Translation2d& pos);
 
 private:
 	void dataModelChanged();
 	void timeChanged(int ms);
+	void mouseMoved(const Translation2d& pos);
 
 private:
 	ArmDataModel& model_;

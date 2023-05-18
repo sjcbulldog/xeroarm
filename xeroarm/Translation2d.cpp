@@ -59,6 +59,18 @@ Rotation2d Translation2d::toRotation() const
 	return Rotation2d::fromRadians(angle);
 }
 
+Translation2d Translation2d::normal() const
+{
+	double len = normalize();
+	Translation2d ret = *this;
+
+	if (len > 0.0) {
+		ret = Translation2d(getX() / len, getY() / len);
+	}
+
+	return ret;
+}
+
 double Translation2d::normalize() const
 {
 	return std::sqrt(x_ * x_ + y_ * y_);

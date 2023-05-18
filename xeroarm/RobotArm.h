@@ -1,19 +1,18 @@
 #pragma once
 
+#include "InverseKinematics.h"
 #include "JointDataModel.h"
 #include "Translation2d.h"
 #include <QtCore/QVector>
 #include <QtCore/QPointF>
-#include <Eigen/Dense>
+
 
 class RobotArm
 {
 public:
-	RobotArm() {
-	}
 
-	virtual ~RobotArm() {
-	}
+	RobotArm();
+	virtual ~RobotArm();
 
 	void setToInitialArmPos();
 	Translation2d getInitialArmPos();
@@ -60,27 +59,36 @@ public:
 
 	double maxArmLength() const;
 	Translation2d forwardKinematics(const QVector<double>& angles) const;
+	Translation2d jointStartPos(int joint, const QVector<double>& angles) const;
 
-	QVector<double> inverseKinematicsSimple(const Translation2d& pt) const;
-	QVector<double> inverseKinematicsJacobian(const Translation2d& pt) const;
+	QVector<double> angles() const {
+		QVector<double> ret;
 
-private:
-	static constexpr const double deltaTheta = 2.0;
-	static constexpr const double arrivedThreshold = 0.1;
+		for (int i = 0; i < joints_.count(); i++) {
+			ret.push_back(joints_.at(i).angle());
+		}
+		return ret;
+	}
 
-private:
-	Eigen::MatrixXd computeJacobian(const QVector<double>& angles) const;
-
-	double lawOfCosines(double a, double b, double c) {
-		return std::acos((a * a + b * b - c * c) / (2 * a * b));
+	QVector<double> inverseKinematics(const Translation2d& pt) const {
+		return inverse_->inverseKinematics(pt);
 	}
 
 private:
 
+	//
+	// The base position of the ARM
+	//
 	Translation2d pos_;
 
 	//
 	// The joints that make up the ARM
 	//
 	QVector<JointDataModel> joints_;
+
+	//
+	// The inverse kinematics used for the ARM
+	//
+	InverseKinematics* inverse_;
+
 };

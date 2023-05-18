@@ -28,6 +28,7 @@ CentralWidget::CentralWidget(ArmDataModel &model, QWidget *parent) : model_(mode
 
 	(void)connect(&model_, &ArmDataModel::dataChanged, this, &CentralWidget::dataModelChanged);
 	(void)connect(slider_, &QSlider::valueChanged, this, &CentralWidget::timeChanged);
+	(void)connect(display_, &ArmDisplay::mouseMove, this, &CentralWidget::mouseMoved);
 }
 
 CentralWidget::~CentralWidget()
@@ -41,12 +42,15 @@ void CentralWidget::timeChanged(int ms)
 
 	double t = static_cast<double>(ms) / 100.0;
 	Pose2dTrajectory pt = path_->profile()->getByTime(t);
+	model_.blockSignals(true);
 	for (int i = 0; i < model_.jointCount(); i++) {
+		if (i == model_.jointCount() - 1) {
+			model_.blockSignals(false);
+		}
 		model_.setJointAngle(i, pt.angles().at(i));
 	}
-
-	emit changeTime(t);
 	display_->repaint();
+	emit changeTime(t);
 }
 
 void CentralWidget::pathSelected(std::shared_ptr<ArmPath> path)
@@ -54,7 +58,7 @@ void CentralWidget::pathSelected(std::shared_ptr<ArmPath> path)
 	path_ = path;
 	display_->setCurrentPath(path);
 
-	if (path_->profile() != nullptr) {
+	if (path_ != nullptr && path_->profile() != nullptr) {
 		auto prof = path_->profile();
 		slider_->setMaximum(static_cast<int>(prof->time() * 100));
 	}
@@ -64,4 +68,9 @@ void CentralWidget::pathSelected(std::shared_ptr<ArmPath> path)
 void CentralWidget::dataModelChanged()
 {
 	display_->resetDisplay();
+}
+
+void CentralWidget::mouseMoved(const Translation2d& pos)
+{
+	emit mouseMove(pos);
 }
