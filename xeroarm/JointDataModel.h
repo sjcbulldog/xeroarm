@@ -60,11 +60,11 @@ public:
 	}
 
 	double maxAccel() const {
-		return maxv_;
+		return maxa_;
 	}
 
 	void setMaxAccel(double d) {
-		maxv_ = d;
+		maxa_ = d;
 	}
 
 	QJsonObject toJson() const;

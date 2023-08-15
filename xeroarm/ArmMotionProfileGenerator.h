@@ -24,8 +24,11 @@ private:
 	QVector<Pose2dTrajectory> makeEqualDistance(const QVector<Pose2dTrajectory>& points, double diststep);
 	std::shared_ptr<ArmMotionProfile> generateTimedProfile(std::shared_ptr<ArmPath> path, const QVector<Pose2dTrajectory>& points);
 
-	double jointConstrainedVelocity(const Pose2dConstrained& state, const Pose2dConstrained& pred);
-	void computeJointValues(Pose2dTrajectory& traj);
+	double jointConstrainedVelocity(int iter, Pose2dConstrained& state, const Pose2dConstrained& pred);
+	double computeOneJointConstraint(int iter, int which, const Pose2dConstrained& pred, double dist);
+	double computeOneJointConstraintVelLimited(int which, const Pose2dConstrained& pred, double dist, double accel);
+
+	void computeJointMetrics(Pose2dConstrained& state, const Pose2dConstrained& pred);
 
 private:
 	ArmDataModel& model_;

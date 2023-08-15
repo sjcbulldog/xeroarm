@@ -87,14 +87,151 @@ QVector<Pose2dTrajectory> ArmMotionProfileGenerator::makeEqualDistance(const QVe
 	return result;
 }
 
-double ArmMotionProfileGenerator::jointConstrainedVelocity(const Pose2dConstrained& state, const Pose2dConstrained &pred)
+double ArmMotionProfileGenerator::computeOneJointConstraintVelLimited(int which, const Pose2dConstrained& pred, double dist, double accel)
 {
-	QVector<double> angles = model_.arm().inverseKinematics(state.pose().getTranslation());
-	return std::numeric_limits<double>::max();
+	//
+	// The part of the motion that is accelerating from the previous velocity to the maximum velocity
+	//
+	double t0;
+	
+	if (accel >= 0.0) {
+		t0 = (model_.arm().joints().at(which).maxVelocity() - pred.angVel(which)) / accel;
+	}
+	else {
+		t0 = (-model_.arm().joints().at(which).maxVelocity() - pred.angVel(which)) / accel;
+	}
+
+	double d0 = 0.5 * model_.arm().joints().at(which).maxAccel() * t0 * t0 + pred.angVel(which) * t0;
+
+	//
+	// We have already determined that this should be a hybrid case, where we accelerate for only part of the cycle, so this distance
+	// should always be smaller than the total distance
+	//
+	assert(d0 < dist);
+
+	//
+	// The remainder of the distance is covered via constanct velocity, accel is zero.
+	//
+	double d1 = (dist - d0);
+	double t1 = d1 / model_.arm().joints().at(which).maxVelocity();
+
+	return t0 + t1;
 }
 
-void ArmMotionProfileGenerator::computeJointValues(Pose2dTrajectory& traj)
+double ArmMotionProfileGenerator::computeOneJointConstraint(int iter, int which, const Pose2dConstrained& pred, double dist)
 {
+	QVector<std::pair<double, double>> roots;
+	double z;
+	double accel = model_.arm().joints().at(which).maxAccel();
+	
+	z = 4.0 * pred.angVel(which) + 8.0 * accel * dist;
+	if (z >= 0.0) {
+		z = std::sqrt(z);
+		roots.push_back(std::make_pair(accel, (-2.0 * pred.angVel(which) + z) / (2.0 * model_.arm().joints().at(which).maxAccel())));
+		roots.push_back(std::make_pair(accel, (-2.0 * pred.angVel(which) - z) / (2.0 * model_.arm().joints().at(which).maxAccel())));
+	}
+
+	z = 4.0 * pred.angVel(which) - 8.0 * model_.arm().joints().at(which).maxAccel() * dist;
+	if (z >= 0.0) {
+		z = std::sqrt(z);
+		roots.push_back(std::make_pair(-accel, (-2.0 * pred.angVel(which) + z) / (2.0 * model_.arm().joints().at(which).maxAccel())));
+		roots.push_back(std::make_pair(-accel, (-2.0 * pred.angVel(which) - z) / (2.0 * model_.arm().joints().at(which).maxAccel())));
+	}
+
+	if (roots.size() == 0) {
+		return std::numeric_limits<double>::max();
+	}
+
+
+	// Now pick the smallest, positive root
+	double ret = std::numeric_limits<double>::max();
+	double aval = 0.0;
+	for (const auto &p : roots) {
+		if (p.second < ret && p.second >= 0.0) {
+			ret = p.second;
+			aval = p.first;
+		}
+	}
+
+	//
+	// Now, see if the computed times lead to a valid velocity that does not 
+	// violate the velocity constraints
+	//
+	double vf = pred.angVel(which) + aval * ret;
+	if (std::abs(vf) > model_.arm().joints().at(which).maxVelocity()) {
+		//
+		// Ok, we are constrained by the max velocity, lets compute the time based on accelerating
+		// from current velocity to max velocity and then staying at max velocity until we hit the
+		// target position
+		//
+		ret = computeOneJointConstraintVelLimited(which, pred, dist, aval);
+	}
+
+	return ret;
+}
+
+double ArmMotionProfileGenerator::jointConstrainedVelocity(int iter, Pose2dConstrained& state, const Pose2dConstrained &pred)
+{
+	QVector<double> curang = model_.arm().inverseKinematics(state.pose().getTranslation());
+	QVector<double> prevang = model_.arm().inverseKinematics(pred.pose().getTranslation());
+	QVector<double> times(model_.arm().count());
+	const auto& joints = model_.arm().joints();
+
+	//
+	// Compute the time it takes each joint to move given its maximum velocity
+	//
+	double maxval = 0.0;
+	int index = -1;
+	for (int i = 0; i < times.size(); i++) {
+		double dist = curang.at(i) - prevang.at(i);
+		times[i] = computeOneJointConstraint(iter, i, pred, dist);
+		if (times[i] > maxval) {
+			index = i;
+			maxval = times[i];
+		}
+	}
+
+	state.setLimitingJoint(index);
+	state.setDuration(maxval);
+
+	if (maxval == 0.0) {
+		//
+		// We are not moving, so our max velocity constraint should be max velocity
+		// 
+		return std::numeric_limits<double>::max();
+	}
+
+	//
+	// Ok the joint with the greatest travel time is the one constraining the 
+	// motion (i.e. the value of index)
+	//
+
+	//
+	// Now that we know the time required between the points based on the slowest joint
+	// we can compute the velocity of the end effector that aligns with that time
+	//
+	return (state.position() - pred.position()) / maxval;
+}
+
+void ArmMotionProfileGenerator::computeJointMetrics(Pose2dConstrained& state, const Pose2dConstrained& pred)
+{
+	//
+	// We know the distance, velocity, and time for the end effector position
+	//
+	QVector<double> curang = model_.arm().inverseKinematics(state.pose().getTranslation());
+	QVector<double> prevang = model_.arm().inverseKinematics(pred.pose().getTranslation());
+
+	for (int i = 0; i < model_.arm().joints().size(); i++) {
+		state.setAngPos(i, curang.at(i));
+
+		if (state.duration() == 0.0) {
+			state.setAngVel(i, 0.0);
+		}
+		else {
+			double angvel = (curang.at(i) - prevang.at(i)) / state.duration();
+			state.setAngVel(i, angvel);
+		}
+	}
 }
 
 std::shared_ptr<ArmMotionProfile> ArmMotionProfileGenerator::generateTimedProfile(std::shared_ptr<ArmPath> path, const QVector<Pose2dTrajectory>& view)
@@ -102,8 +239,12 @@ std::shared_ptr<ArmMotionProfile> ArmMotionProfileGenerator::generateTimedProfil
 	QVector<Pose2dConstrained> points;
 	Pose2dConstrained predecessor(model_.jointCount());
 	const static double kEpsilon = 1e-6;
-	double maxaccel = 12.0;
-	double maxvel = 12.0;
+
+	//
+	// These are very big, but should be constrained by the per joint angle velocity and acceleration
+	//
+	double maxaccel = 1000000;
+	double maxvel = 1000000;
 
 	predecessor.setPosition(0.0);
 	predecessor.setPose(view[static_cast<int>(0)]);
@@ -133,8 +274,9 @@ std::shared_ptr<ArmMotionProfile> ArmMotionProfileGenerator::generateTimedProfil
 			state.setAccelMin(-maxaccel);
 			state.setAccelMax(maxaccel);
 
-			double convel = jointConstrainedVelocity(state, predecessor);
+			double convel = jointConstrainedVelocity(i, state, predecessor);
 			state.setVelocity(std::min(state.velocity(), convel));
+			computeJointMetrics(state, predecessor);
 
 			if (state.velocity() < 0.0)
 				throw std::runtime_error("invalid maximum velocity - constraint set to negative");
@@ -191,6 +333,7 @@ std::shared_ptr<ArmMotionProfile> ArmMotionProfileGenerator::generateTimedProfil
 				throw std::runtime_error("invalid new maximum velocity");
 
 			state.setVelocity(newmaxvel);
+			computeJointMetrics(state, predecessor);
 			points[i] = state;
 
 			if (dist > kEpsilon)
@@ -264,6 +407,10 @@ std::shared_ptr<ArmMotionProfile> ArmMotionProfileGenerator::generateTimedProfil
 		trajpt.setAaccel(aacel);
 
 		result.push_back(trajpt);
+	}
+
+	for (Pose2dTrajectory& point : result) {
+		model_.arm().inverseKinematics(point.getTranslation());
 	}
 
 	return std::make_shared<ArmMotionProfile>(path, result);

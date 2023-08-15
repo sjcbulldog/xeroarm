@@ -173,6 +173,10 @@ void xeroarm::createMenus()
 	act = file_menu_->addAction("Save As ...");
 	connect(act, &QAction::triggered, this, &xeroarm::saveAsFile);
 
+	file_menu_->addSeparator();
+	act = file_menu_->addAction("Write Trajectory ...");
+	connect(act, &QAction::triggered, this, &xeroarm::writeCurrentTrajectory);
+
 	ik_type_ = new QMenu(tr("Inverse Kinematics"));
 	menuBar()->addMenu(ik_type_);
 	ik_type_group_ = new QActionGroup(this);
@@ -202,6 +206,22 @@ void xeroarm::saveFile()
 	}
 	else {
 		save(filename_);
+	}
+}
+
+void xeroarm::writeCurrentTrajectory()
+{
+	if (central_->getSelectedPath() == nullptr) {
+		QMessageBox::warning(this, "No Path Selected", "No ARM path is currently selected.");
+		return;
+	}
+
+	QString filename = QFileDialog::getSaveFileName(this, tr("CSV File Path"), "", tr("CSV File(*.csv);; All Files(*)"));
+	if (filename.length() == 0) {
+		QMessageBox::warning(this, "No File Selected", "No output filename was selected, file not saved");
+	}
+	else {
+		model_.writeTrajectory(central_->getSelectedPath()->profile(), filename);
 	}
 }
 

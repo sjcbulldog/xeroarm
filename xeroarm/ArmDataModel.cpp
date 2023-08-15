@@ -2,6 +2,7 @@
 #include "JsonFileKeywords.h"
 #include "ArmMotionProfileGenerator.h"
 #include <QtCore/QFile>
+#include <QtCore/QTextStream>
 
 ArmDataModel::ArmDataModel()
 {
@@ -23,12 +24,85 @@ ArmDataModel::~ArmDataModel()
 	generate_.join();
 }
 
+void ArmDataModel::writeTrajectory(std::shared_ptr<ArmMotionProfile> profile, const QString& filename)
+{
+	QFile file(filename);
+	file.open(QIODevice::WriteOnly);
+	QTextStream strm(&file);
+
+	QVector<Pose2dTrajectory> traj = profile->trajectory();
+	QString line;
+	Pose2dTrajectory prev = traj[0];
+	QVector<double> prevvel(2);
+
+	line = "time";
+	line += ",position";
+	line += ",X";
+	line += ",Y";
+	line += ",a0";
+	line += ",a1";
+	line += ",v0";
+	line += ",v1";
+	line += ",aa0";
+	line += ",aa1";
+	strm << line << '\n';
+
+	for (int i = 0; i < traj.count(); i++) {
+		const Pose2dTrajectory& p = traj[i];
+		line = QString::number(p.time());
+		line += "," + QString::number(p.position());
+		line += "," + QString::number(p.getTranslation().getX());
+		line += "," + QString::number(p.getTranslation().getY());
+		line += "," + QString::number(p.angles().at(0));
+		line += "," + QString::number(p.angles().at(1));
+
+		if (i == 0) {
+			line += ",0.0";
+			line += ",0.0";
+			line += ",0.0";
+			line += ",0.0";
+		}
+		else {
+			double deltat = p.time() - prev.time();
+			double v0 = (p.angles().at(0) - prev.angles().at(0)) / deltat;
+			line += "," + QString::number(v0);
+			double v1 = (p.angles().at(1) - prev.angles().at(1)) / deltat;
+			line += "," + QString::number(v1);
+
+			double a0 = (v0 - prevvel[0]) / deltat;
+			double a1 = (v1 - prevvel[1]) / deltat;
+
+			line += "," + QString::number(a0);
+			line += "," + QString::number(a1);
+
+			prevvel[0] = v0;
+			prevvel[1] = v1;
+
+		}
+
+		prev = p;
+		strm << line << '\n';
+	}
+
+	file.close();
+}
+
 void ArmDataModel::generateTrajectories()
 {
-	std::lock_guard guard(queue_lock_);
-	queue_.clear();
-	for (auto path : paths_.values()) {
-		queue_.push_back(path);
+	bool ok = true;
+
+	for (const JointDataModel &joint : joints()) {
+		if (joint.maxAccel() <= 0.0 || joint.maxVelocity() <= 0.0) {
+			ok = false;
+		}
+	}
+
+	if (ok) {
+		std::lock_guard guard(queue_lock_);
+		queue_.clear();
+		for (auto path : paths_.values()) {
+			queue_.push_back(path);
+		}
 	}
 }
 
@@ -48,7 +122,7 @@ void ArmDataModel::threadFunction()
 		if (path != nullptr) {
 			emit progress("Generating data for path '" + path->name() + "'");
 			ArmMotionProfileGenerator gen(*this);
-			auto profile = gen.generateProfile(path);
+			std::shared_ptr<ArmMotionProfile> profile = gen.generateProfile(path);
 			path->setProfile(profile);
 		}
 

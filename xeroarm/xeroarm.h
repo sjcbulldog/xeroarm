@@ -28,6 +28,7 @@ private:
     void saveAsFile();
     void closeFile();
     void openFile();
+    void writeCurrentTrajectory();
 
     void resetView();
 

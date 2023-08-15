@@ -29,6 +29,10 @@ public:
 
 	QSplitter* getMainSplitter() { return main_;  }
 
+	std::shared_ptr<ArmPath> getSelectedPath() {
+		return path_;
+	}
+
 	void pathSelected(std::shared_ptr<ArmPath> path);
 
 signals:

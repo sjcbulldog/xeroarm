@@ -42,6 +42,7 @@ private:
 	void insertNode(const QString& node);
 	void setupTimeAxis();
 	QCPAxis* createAxis(const QString& name);
+	QCPAxis* createNewAxis(const QString& name);
 
 	void prepareCustomMenu(const QPoint& pos);
 	void removeAll();
@@ -53,6 +54,8 @@ private:
 	QMap<QString, QCPGraph*> graphs_;
 	bool left_right_;
 	int color_index_;
+
+	QMap<QString, QCPAxis*> axis_store_;
 
 	static QVector<QColor> node_colors_;
 };

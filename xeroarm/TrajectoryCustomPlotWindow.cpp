@@ -166,12 +166,54 @@ void TrajectoryCustomPlotWindow::setupTimeAxis()
 
 QCPAxis* TrajectoryCustomPlotWindow::createAxis(const QString& node)
 {
+	QCPAxis* ret = nullptr;
+	QString name = "";
+
+	if (node == "eposition") {
+		name = node;
+	}
+	else if (node == "evelocity") {
+		name = node;
+	}
+	else if (node == "eacceleration") {
+		name = node;
+
+	}
+	else if (node.startsWith("aposition")) {
+		name = "aposition";
+	}
+	else if (node.startsWith("avelocity")) {
+		name = "avelocity";
+
+	}
+	else if (node.startsWith("aacceleration")) {
+		name = "aacceleration";
+	}
+
+	if (name.isEmpty()) {
+		ret = createNewAxis(node);
+	}
+	else {
+		if (axis_store_.contains(name)) {
+			ret = axis_store_.value(name);
+		}
+		else {
+			ret = createNewAxis(node);
+			axis_store_.insert(name, ret);
+		}
+	}
+
+	return ret;
+}
+
+QCPAxis* TrajectoryCustomPlotWindow::createNewAxis(const QString& node)
+{
 	QCPAxis* axis = nullptr;
 
 	int index = node.indexOf('-');
 	QString name = node.mid(0, index);
 	QString typestr = node.mid(index + 1);
-	AxisType type = mapVariableToAxis(typestr);
+	AxisType type = mapVariableToAxis(name);
 
 	//
 	// We create a new axis
@@ -199,14 +241,14 @@ QCPAxis* TrajectoryCustomPlotWindow::createAxis(const QString& node)
 		axis->setLabel("acceleration (m/s/s)");
 	}
 	else if (type == AxisType::Angle) {
-		axis->setLabel("angle (degrees)");
+		axis->setLabel("angle (deg)");
 		axis->setRange(-180.0, 180.0);
 	}
 	else if (type == AxisType::AngleVelocity) {
-		axis->setLabel("angle velocity (degrees/second)");
+		axis->setLabel("velocity (deg/s)");
 	}
-	else if (type == AxisType::Curvature) {
-		axis->setLabel("curvature");
+	else if (type == AxisType::AngleAcceleration) {
+		axis->setLabel("accel (deg/s/s)");
 	}
 
 	y_axis_[type] = axis;

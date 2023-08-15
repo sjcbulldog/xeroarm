@@ -64,6 +64,7 @@ protected:
 		Curvature,
 		Angle,
 		AngleVelocity,
+		AngleAcceleration
 	};
 
 	AxisType mapVariableToAxis(const QString& var);

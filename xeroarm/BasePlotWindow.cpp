@@ -20,26 +20,24 @@ BasePlotWindow::AxisType BasePlotWindow::mapVariableToAxis(const QString& var)
 {
 	AxisType ret = AxisType::Distance;
 
-	//if (var == RobotPath::HeadingTag || var == RobotPath::RotationTag)
-	//{
-	//	ret = AxisType::Angle;
-	//}
-	//else if (var == RobotPath::SwerveRotationVelocityTag)
-	//{
-	//	ret = AxisType::AngleVelocity;
-	//}
-	//else if (var == RobotPath::CurvatureTag)
-	//{
-	//	ret = AxisType::Curvature;
-	//}
-	//else if (var == RobotPath::VelocityTag)
-	//{
-	//	ret = AxisType::Speed;
-	//}
-	//else if (var == RobotPath::AccelerationTag)
-	//{
-	//	ret = AxisType::Acceleration;
-	//}
+	if (var == "eposition") {
+		ret = AxisType::Distance;
+	}
+	else if (var == "evelocity") {
+		ret = AxisType::Speed;
+	}
+	else if (var == "eacceleration") {
+		ret = AxisType::Acceleration;
+	}
+	else if (var.startsWith("aposition")) {
+		ret = AxisType::Angle;
+	}
+	else if (var.startsWith("avelocity")) {
+		ret = AxisType::AngleVelocity;
+	}
+	else if (var.startsWith("aacceleration")) {
+		ret = AxisType::AngleAcceleration;
+	}
 
 	return ret;
 }

@@ -46,6 +46,8 @@ public:
 		dirty_ = false;
 	}
 
+	void writeTrajectory(std::shared_ptr<ArmMotionProfile> profile, const QString &filename);
+
 	void clear() {
 		arm_.setPos(Translation2d(0.0, 2.0));
 		bumper_pos_ = Translation2d(10.5, 2.0);
